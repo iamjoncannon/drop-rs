@@ -687,6 +687,7 @@ dependencies = [
  "isahc",
  "lazy_static",
  "log",
+ "log-attributes",
  "log-derive",
  "once_cell",
  "rand",
@@ -1377,6 +1378,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 dependencies = [
  "value-bag",
+]
+
+[[package]]
+name = "log-attributes"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "815a3631864129f4c3c9cdcfb3991f132f943f4cfba0ec1f1e1685b025f9c497"
+dependencies = [
+ "log",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]

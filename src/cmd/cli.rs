@@ -8,7 +8,7 @@ use std::error::Error;
 #[command(propagate_version = true)]
 pub struct Cli {
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Command,
 
     /// log level
     #[arg(short, long, value_enum, default_value="info")]
@@ -16,11 +16,11 @@ pub struct Cli {
 
     /// drop environment
     #[arg(short, long, default_value="base")]
-    pub env: Option<String>,
+    pub env: String,
 
     /// dropfile directory
-    #[arg(short, long)]
-    pub dir: Option<String>,
+    #[arg(short, long, default_value=".")]
+    pub dir: String,
 
     /// inputs
     #[arg(short = 'i', long, value_parser = parse_key_val::<String, String>)]
@@ -36,7 +36,7 @@ pub enum LogLevelInput {
 
 #[derive(Subcommand, Debug, PartialEq)]
 #[allow(non_camel_case_types)]
-pub enum Commands {
+pub enum Command {
     ///
     /// list block(s) in env or module
     ///
@@ -63,7 +63,7 @@ pub enum Commands {
     /// to call- `drop hit public.get.nasa_neos``
     hit {
         /// either a module or the id of the call block to run
-        id: String,
+        drop_id: String,
     },
 
     /// verify valid config files for environment

@@ -1,7 +1,7 @@
 #![allow(warnings)]
 
 use clap::Parser;
-use cmd::{cli::Cli, CmdContext};
+use cmd::{cli::{Cli, LogLevelInput}, ctx::CmdContext};
 use colored::Colorize;
 use interpreter::scope::{GlobalScopeProvider, Scope};
 use log::{error, LevelFilter};
@@ -33,6 +33,50 @@ mod util;
 // use log_derive::{logfn, logfn_inputs};
 #[tokio::main]
 async fn main() {
+
+    setup_panic_handler();
+
+    let cli = Cli::parse();
+
+    setup_logger(cli.level);
+
+    log::debug!("cli input {:?}", cli);
+
+    let command = &cli.command;
+
+    log::debug!("command {:?}", command);
+
+    // todo- delete and initialize from persist provider
+    let mut persister = SqlitePersister::init();
+
+    set_global_config(&cli.dir);
+
+    set_variable_scope(&cli.env, &mut persister);
+
+    // CmdContext should convert input_drop_id
+    // to drop_id struct
+    // let cmd = CmdContext { input_drop_id };
+
+    // CmdContext::set(cmd);
+
+    // log::info!(
+    //     "hitting {} in environment {}\n",
+    //     input_drop_id.yellow(),
+    //     cli.env.yellow()
+    // );
+
+    // let target_drop_id = CmdContext::get_target_id();
+
+    // let (hcl_block, drop_block, _eval_diag) =
+    //     Evaluator::evaluate_call(target_drop_id.unwrap()).unwrap();
+
+    // let drop_call =
+    //     DropCall::from_hcl_block(&hcl_block, drop_block.drop_id.as_ref().unwrap().clone());
+
+    // RunPool::runner_pool().await;
+}
+
+fn setup_panic_handler(){
     // prevent panic from printing generic rust message
     std::panic::set_hook(Box::new(|err| {
         let entire_error = err.to_string();
@@ -44,70 +88,25 @@ async fn main() {
 
         println!("{exited}{run_with_log}");
     }));
+}
 
-    // todo-- configure global log level from cli flag
-
+fn setup_logger(level: LogLevelInput){
     let mut log_config = ConfigBuilder::new();
     log_config.set_time_level(LevelFilter::Debug);
 
-    let cli = Cli::parse();
-
-    let level_filter = match cli.level {
+    let level_filter = match level {
             cmd::cli::LogLevelInput::Info => LevelFilter::Info,
             cmd::cli::LogLevelInput::Debug => LevelFilter::Debug,
             cmd::cli::LogLevelInput::Trace => LevelFilter::Trace,
     };
 
     TermLogger::init(
-        // LevelFilter::Info,
         level_filter,
-        // Config::default(),
         log_config.build(),
         TerminalMode::default(),
         ColorChoice::Always,
     )
     .unwrap();
-
-    log::debug!("cli input {:?}", cli);
-
-    let current_command = &cli.command;
-
-    log::debug!("current_command {:?}", current_command);
-
-    // TODO-- cli.dir
-    let dropfile_dir = ".";
-
-    let user_selected_env = "local";
-
-    let input_drop_id = "example.get.example_hit";
-
-    let mut persister = SqlitePersister::init();
-
-    set_global_config(dropfile_dir);
-
-    set_variable_scope(user_selected_env, &mut persister);
-
-    // CmdContext should convert input_drop_id
-    // to drop_id stuct
-    let cmd = CmdContext { input_drop_id };
-
-    CmdContext::set(cmd);
-
-    log::info!(
-        "hitting {} in environment {}\n",
-        input_drop_id.yellow(),
-        cli.env.unwrap().yellow()
-    );
-
-    // let target_drop_id = CmdContext::get_target_id();
-
-    // let (hcl_block, drop_block, _eval_diag) =
-    //     Evaluator::evaluate_call(target_drop_id.unwrap()).unwrap();
-
-    // let drop_call =
-    //     DropCall::from_hcl_block(&hcl_block, drop_block.drop_id.as_ref().unwrap().clone());
-
-    // RunPool::runner_pool().await;
 }
 
 fn set_global_config(dropfile_dir: &str) {

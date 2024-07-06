@@ -3,7 +3,7 @@ use super::{
     scope::{GlobalScopeProvider, Scope},
 };
 use crate::{
-    cmd::CmdContext,
+    cmd::ctx::CmdContext,
     constants::MOD_OBJECT_VAR_PREFIX,
     parser::{
         drop_block::{DropBlock, DropBlockType},

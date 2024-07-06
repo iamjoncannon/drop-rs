@@ -53,12 +53,8 @@ impl GlobalDropConfig {
         }
     }
 
-    #[logfn(
-        ok = "TRACE",
-        err = "ERROR",
-        fmt = "Resolved GlobalDropConfig: {:?}",
-        log_ts = true
-    )]
+    #[log_attributes::log(debug, "GlobalDropConfig {fn}")]
+    #[log_attributes::log(trace, "GlobalDropConfig {fn} output: {return:?}")]
     pub fn from_drop_files(drop_files: &Vec<PathBuf>) -> Result<GlobalDropConfig, anyhow::Error> {
         let mut unevaluated_blocks: Vec<DropBlock> = Vec::new();
         let mut file_level_module_declarations: HashSet<String> = HashSet::new();
@@ -147,10 +143,10 @@ impl GlobalDropConfig {
     /// parse blocks and perform basic validation on properties,
     /// collect module declarations
     ///
+    #[log_attributes::log(trace, "{fn} file_name: {file_name} output: {return:?}")]
     pub fn collect_unevalulated_blocks(
         file_body: hcl::Body,
         file_name: &str,
-        // unevaluated_blocks: &mut Vec<DropBlock>,
         blockless_module_declarations: &mut HashSet<String>,
     ) -> Result<Vec<Result<DropBlock, anyhow::Error>>, anyhow::Error> {
         let mut module_declaration: Option<&str> = None;

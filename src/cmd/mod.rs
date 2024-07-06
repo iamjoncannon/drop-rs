@@ -1,45 +1,44 @@
-use std::sync::OnceLock;
-use anyhow::anyhow;
+use cli::Command;
+
 
 pub mod cli;
+pub mod ctx;
 
-static GLOBAL_CMD_CTX_PROVIDER: OnceLock<CmdContext> = OnceLock::new();
+pub struct CommandManager {}
 
-#[derive(Debug)]
-pub struct CmdContext{
-    pub input_drop_id: &'static str,
-    // pub drop_id: DropId
-    // pub dropfile_dir: String
-    // Cli
-    // Commands
+impl CommandManager {
+    pub fn get_command(command: &Command) -> Box<dyn DropCommand> {
+
+        match command {
+            Command::ok { drop_mod } => Box::new(OkCommand{ drop_mod: drop_mod.clone() }),
+            Command::hit { drop_id } => todo!(),
+            Command::give { drop_id } => todo!(),
+            Command::secret { action, key, value } => todo!(),
+            Command::list { resource_type } => todo!(),
+        }
+    }
 }
 
-impl CmdContext {
+pub trait DropCommand {
+    fn run(self);
+}
 
-    pub fn set(cmd: CmdContext){
+pub struct OkCommand{
+    drop_mod: Option<String>
+}
 
-        let cell_set_result = GLOBAL_CMD_CTX_PROVIDER.set(cmd);
 
-        if cell_set_result.is_err() {
-            log::error!(
-                "Error setting global cmd context provider: {:?}",
-                cell_set_result.unwrap_err()
-            )
-        }
+impl DropCommand for OkCommand {
+    fn run(self) {
+
     }
+}
 
-    pub fn get() -> Result<&'static CmdContext, anyhow::Error> {
-        let res = GLOBAL_CMD_CTX_PROVIDER.get();
+pub struct HitCommand{}
 
-        if let Some(ctx) = res {
-            Ok(ctx)
-        } else {
-            Err(anyhow!("error accessing global cmd ctx"))
-        }
-    }
 
-    pub fn get_target_id() -> Result<&'static str, anyhow::Error> {
-        let cmd = CmdContext::get()?;
-        Ok(cmd.input_drop_id)
+impl DropCommand for HitCommand {
+    fn run(self) {
+
     }
 }
