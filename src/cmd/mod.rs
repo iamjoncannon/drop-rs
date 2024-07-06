@@ -1,11 +1,17 @@
 use std::sync::OnceLock;
 use anyhow::anyhow;
 
+pub mod cli;
+
 static GLOBAL_CMD_CTX_PROVIDER: OnceLock<CmdContext> = OnceLock::new();
 
 #[derive(Debug)]
 pub struct CmdContext{
     pub input_drop_id: &'static str,
+    // pub drop_id: DropId
+    // pub dropfile_dir: String
+    // Cli
+    // Commands
 }
 
 impl CmdContext {

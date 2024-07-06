@@ -1,15 +1,14 @@
-use call::DropCall;
-use cmd::CmdContext;
+#![allow(warnings)]
+
+use clap::Parser;
+use cmd::{cli::Cli, CmdContext};
 use colored::Colorize;
-use interpreter::{
-    evaluate::Evaluator,
-    scope::{GlobalScopeProvider, Scope},
-};
+use interpreter::scope::{GlobalScopeProvider, Scope};
 use log::{error, LevelFilter};
 use parser::{file_walker::FileWalker, GlobalDropConfig, GlobalDropConfigProvider};
 use persist::{sqlite_persister::SqlitePersister, Persister};
-use runner::RunPool;
-use simplelog::{ColorChoice, Config, TermLogger, TerminalMode};
+use simplelog::{ColorChoice, Config, ConfigBuilder, TermLogger, TerminalMode};
+
 mod action;
 mod assert;
 mod call;
@@ -22,10 +21,6 @@ mod persist;
 mod record;
 mod runner;
 mod util;
-use futures::{executor, future::RemoteHandle, TryFutureExt}; //standard executors to provide a context for futures and streams
-
-#[allow(clippy::unnecessary_unwrap)]
-// #[allow(clippy::collapsible_match)]
 
 // TODO
 //  - create mock env, mod, and calls
@@ -52,32 +47,57 @@ async fn main() {
 
     // todo-- configure global log level from cli flag
 
+    let mut log_config = ConfigBuilder::new();
+    log_config.set_time_level(LevelFilter::Debug);
+
+    let cli = Cli::parse();
+
+    let level_filter = match cli.level {
+            cmd::cli::LogLevelInput::Info => LevelFilter::Info,
+            cmd::cli::LogLevelInput::Debug => LevelFilter::Debug,
+            cmd::cli::LogLevelInput::Trace => LevelFilter::Trace,
+    };
+
     TermLogger::init(
-        LevelFilter::Info,
-        Config::default(),
+        // LevelFilter::Info,
+        level_filter,
+        // Config::default(),
+        log_config.build(),
         TerminalMode::default(),
         ColorChoice::Always,
     )
     .unwrap();
 
-    RunPool::runner_pool().await;
+    log::debug!("cli input {:?}", cli);
+
+    let current_command = &cli.command;
+
+    log::debug!("current_command {:?}", current_command);
 
     // TODO-- cli.dir
-    // let dropfile_dir = ".";
+    let dropfile_dir = ".";
 
-    // let user_selected_env = "local";
+    let user_selected_env = "local";
 
-    // let input_drop_id = "example.get.example_hit";
+    let input_drop_id = "example.get.example_hit";
 
-    // let mut persister = SqlitePersister::init();
+    let mut persister = SqlitePersister::init();
 
-    // set_global_config(dropfile_dir);
+    set_global_config(dropfile_dir);
 
-    // set_variable_scope(user_selected_env, &mut persister);
+    set_variable_scope(user_selected_env, &mut persister);
 
-    // let cmd = CmdContext { input_drop_id };
+    // CmdContext should convert input_drop_id
+    // to drop_id stuct
+    let cmd = CmdContext { input_drop_id };
 
-    // CmdContext::set(cmd);
+    CmdContext::set(cmd);
+
+    log::info!(
+        "hitting {} in environment {}\n",
+        input_drop_id.yellow(),
+        cli.env.unwrap().yellow()
+    );
 
     // let target_drop_id = CmdContext::get_target_id();
 
@@ -87,7 +107,7 @@ async fn main() {
     // let drop_call =
     //     DropCall::from_hcl_block(&hcl_block, drop_block.drop_id.as_ref().unwrap().clone());
 
-    // println!("drop_call {:?}", drop_call);
+    // RunPool::runner_pool().await;
 }
 
 fn set_global_config(dropfile_dir: &str) {

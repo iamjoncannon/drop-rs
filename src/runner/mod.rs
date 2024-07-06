@@ -10,8 +10,7 @@ pub struct RunPool {}
 
 impl RunPool {
     pub async fn runner_pool() {
-
-    let result_mutex = Arc::new(Mutex::new(Vec::new()));
+        let result_mutex = Arc::new(Mutex::new(Vec::new()));
 
         let mut run_list: Vec<DropRunner> = Vec::<DropRunner>::new();
 
@@ -24,28 +23,27 @@ impl RunPool {
             rx: None,
         });
 
-        run_list.push(DropRunner {
-            message: s!("dose"),
-            id: 2,
-            depends_on: vec![1],
-            result_mutex: Arc::clone(&result_mutex),
-            tx: None,
-            rx: None,
-        });
+        // run_list.push(DropRunner {
+        //     message: s!("dose"),
+        //     id: 2,
+        //     depends_on: vec![1],
+        //     result_mutex: Arc::clone(&result_mutex),
+        //     tx: None,
+        //     rx: None,
+        // });
 
-        run_list.push(DropRunner {
-            message: s!("tres"),
-            id: 3,
-            depends_on: vec![1,2],
-            result_mutex: Arc::clone(&result_mutex),
-            tx: None,
-            rx: None,
-        });
+        // run_list.push(DropRunner {
+        //     message: s!("tres"),
+        //     id: 3,
+        //     depends_on: vec![1, 2],
+        //     result_mutex: Arc::clone(&result_mutex),
+        //     tx: None,
+        //     rx: None,
+        // });
 
         let (tx, _) = tokio::sync::broadcast::channel::<i32>(run_list.capacity());
 
         // give each run task a broadcast channel and receiver
-        // and result mutex clone
 
         run_list.iter_mut().for_each(move |run| {
             run.tx = Some(tx.clone());
@@ -64,7 +62,7 @@ impl RunPool {
                 log::warn!("join error: {:?}", res.unwrap_err());
             } else {
                 let completed_id: i32 = res.unwrap();
-                log::trace!("DropRunner completed task with id: {completed_id}");
+                log::trace!("RunPool completed task with id: {completed_id}");
             }
         }
     }

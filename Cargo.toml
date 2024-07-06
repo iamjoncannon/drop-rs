@@ -30,7 +30,7 @@ lazy_static = "1.5.0"
 futures = { version = "0.3.30", features = ["thread-pool"] }
 rand = "0.8.5"
 tokio = "1.38.0"
-reduce = "0.1.5"
+clap = { version = "4.5.2", features = ["derive"] }
 
 [dev-dependencies]
 httpmock = "0.7.0-rc.1"

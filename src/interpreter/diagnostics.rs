@@ -30,8 +30,6 @@ impl EvalDiagnostics {
         for error in errors {
             let message = error.to_string();
 
-            trace!("evaluate_errors error message {message}");
-
             if message.contains("assert.") {
                 continue;
             }
@@ -51,6 +49,8 @@ impl EvalDiagnostics {
                 errors_surfaced_to_caller_for_handling.push(error.to_owned());
                 continue;
             }
+
+            trace!("evaluate_errors error message {message}");
 
             if message.contains("undefined variable `secret`") {
                 self.print_input_secret_helpers();

@@ -1,6 +1,5 @@
 use core::panic;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 
 use derive_getters::Getters;
 use hcl::{Block, Traversal};
@@ -72,7 +71,7 @@ impl DropCall {
 
     pub fn from_hcl_block(block: &Block, drop_id: DropId) -> DropCall {
         let block_type = block.identifier();
-        let block_label = block.labels();
+        let _block_label = block.labels();
         let block_body = block.body();
 
         let mut call = DropCall::default(drop_id, block_type);
@@ -97,9 +96,9 @@ impl DropCall {
         match body_id {
             GET_BLOCK_IDENTIFIER => Method::GET,
             POST_BLOCK_IDENTIFIER => Method::POST,
-            PUT_BLOCK_KEY => Method::PUT,
+            _PUT_BLOCK_KEY => Method::PUT,
             PATCH_BLOCK_IDENTIFIER => Method::PATCH,
-            DELETE_BLOCK_KEY => Method::DELETE,
+            _DELETE_BLOCK_KEY => Method::DELETE,
             _ => {
                 panic!("Method not supported");
             }

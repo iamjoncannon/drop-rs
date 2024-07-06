@@ -1,8 +1,7 @@
-use reduce::Reduce;
 use std::sync::{Arc, Mutex};
 
 use rand::Rng;
-use tokio::sync::broadcast::{self, Receiver, Sender};
+use tokio::sync::broadcast::{self, error::SendError, Receiver, Sender};
 
 /// DropRunner manages the exchange
 /// between the underlying call
@@ -28,7 +27,7 @@ impl DropRunner {
         id: i32,
     ) -> Arc<Mutex<Vec<i32>>> {
         if depends_on.is_empty() {
-            log::info!("TASK COMPLETE id: {id:?} ");
+            log::trace!("DropRunner task complete id: {id:?} ");
             return mutex;
         }
 
@@ -37,7 +36,6 @@ impl DropRunner {
                 // the message itself is simply
                 // to trigger an observation of the result hash
                 Ok(_recvd) => {
-
                     let unlocked = mutex.lock().unwrap();
 
                     let mut completed = true;
@@ -49,8 +47,8 @@ impl DropRunner {
                     }
 
                     if completed {
-                        log::info!(
-                            "TASK COMPLETE id: {id:?} dependencies: {:?} completed: {:?}",
+                        log::trace!(
+                            "DropRunner task complete id: {id:?} dependencies: {:?} completed: {:?}",
                             depends_on,
                             unlocked
                         );
@@ -75,7 +73,7 @@ impl DropRunner {
             DropRunner::wait_for_dependencies(mutex, self.rx.unwrap(), self.depends_on, self.id)
                 .await;
 
-        DropRunner::api_call_placeholder(self.id);
+        DropRunner::api_call_placeholder();
 
         // report output to global output hash
         mutex.lock().unwrap().push(self.id);
@@ -84,17 +82,21 @@ impl DropRunner {
         let send_res = self.tx.unwrap().send(self.id);
 
         if send_res.is_err() {
-            log::warn!(
-                "DropRunner::run task id {:?} send message response error: {:?}",
-                self.id,
-                send_res.unwrap_err()
-            );
+            match send_res.unwrap_err() {
+                SendError(e) => {
+                    log::trace!(
+                        "DropRunner::run task id {:?} send message response error: {:?}",
+                        self.id,
+                        e
+                    );
+                }
+            }
         }
 
         self.id
     }
 
-    fn api_call_placeholder(id: i32) {
+    fn api_call_placeholder() {
         let mut rng = rand::thread_rng();
 
         let millis = rng.gen_range(1..2000);

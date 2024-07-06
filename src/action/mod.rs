@@ -4,7 +4,7 @@ use hcl::{expr::Traversal, Expression};
 use log::error;
 use std::collections::HashMap;
 
-use crate::{cmd::CmdContext, parser::hcl_block::HclBlock, persist::PersisterProvider, record::CallRecord};
+use crate::{parser::hcl_block::HclBlock, persist::PersisterProvider, record::CallRecord};
 
 pub mod accessor;
 
