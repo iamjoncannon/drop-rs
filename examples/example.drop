@@ -1,0 +1,15 @@
+mod = example
+
+get "example_hit" {
+  base_url = env.user_base_url
+
+  path = join("/some_path/", mod.example_variable)
+
+  headers = [{"my" : "header"}]
+
+  body = {
+    "thing" : "another thing"
+  }
+
+  outputs = [response.body]
+}
