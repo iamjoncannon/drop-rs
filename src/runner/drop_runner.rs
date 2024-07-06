@@ -3,28 +3,32 @@ use std::sync::{Arc, Mutex};
 use rand::Rng;
 use tokio::sync::broadcast::{self, error::SendError, Receiver, Sender};
 
+use super::{drop_run::DropRun, RunPoolMutex, RunPoolOutputMap};
+
 /// DropRunner manages the exchange
 /// between the DropRun
 /// and the thread pool
 #[derive(Debug)]
 pub struct DropRunner {
-    pub message: String,
     pub id: i32,
+    pub drop_run: DropRun,
     pub depends_on: Vec<i32>,
-    pub result_mutex: Arc<Mutex<Vec<i32>>>,
+    pub result_mutex: Arc<Mutex<RunPoolOutputMap>>,
     pub tx: Option<Sender<i32>>,
     pub rx: Option<Receiver<i32>>,
 }
 
 impl DropRunner {
+
     async fn wait_for_dependencies(
-        mutex: Arc<Mutex<Vec<i32>>>,
+        mutex: RunPoolMutex,
         mut rx: Receiver<i32>,
         depends_on: Vec<i32>,
         id: i32,
-    ) -> Arc<Mutex<Vec<i32>>> {
+    ) -> RunPoolMutex {
+
         if depends_on.is_empty() {
-            log::trace!("DropRunner task complete id: {id:?} ");
+            log::trace!("DropRunner task {id:?} dependencies resolved, starting.");
             return mutex;
         }
 
@@ -38,9 +42,10 @@ impl DropRunner {
                     let mut completed = true;
 
                     for dependency in depends_on.iter() {
-                        if !unlocked.contains(dependency) {
-                            completed = false;
-                        }
+                        
+                        // logic to resolve dependencies
+                        // from previous chain run 
+
                     }
 
                     if completed {
@@ -70,15 +75,13 @@ impl DropRunner {
             DropRunner::wait_for_dependencies(mutex, self.rx.unwrap(), self.depends_on, self.id)
                 .await;
 
-        // generate DropCall for api call from DropRun
-        // and input dependencies 
-
         DropRunner::api_call_placeholder();
 
         // report output to global output hash
-        mutex.lock().unwrap().push(self.id);
+        // mutex.lock().unwrap().push(self.id);
 
         // broadcast the id of the completed task
+        // to trigger observation in remaining tasks
         let send_res = self.tx.unwrap().send(self.id);
 
         if send_res.is_err() {
@@ -95,7 +98,7 @@ impl DropRunner {
 
         self.id
     }
-
+    
     fn api_call_placeholder() {
         let mut rng = rand::thread_rng();
 

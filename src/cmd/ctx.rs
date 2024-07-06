@@ -5,6 +5,7 @@ use super::cli::{Cli, Command};
 
 static GLOBAL_CMD_CTX_PROVIDER: OnceLock<CmdContext> = OnceLock::new();
 
+/// global context provider for clap cli input
 #[derive(Debug)]
 pub struct CmdContext{
     cli: Cli,

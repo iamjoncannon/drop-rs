@@ -25,15 +25,6 @@ mod record;
 mod runner;
 mod util;
 
-// TODO
-//  - create mock env, mod, and calls
-//
-// - parse current files and generate GlobalDropConfig
-// - GlobalDropConfig propagated as global provider
-// global drop config should be structured to service give, list, and hit
-//
-// - run command
-// use log_derive::{logfn, logfn_inputs};
 #[tokio::main]
 async fn main() {
     setup_panic_handler();
@@ -54,7 +45,7 @@ async fn main() {
 
     drop_command.announce();
 
-    drop_command.run()
+    drop_command.run().await;
 }
 
 fn setup_panic_handler() {

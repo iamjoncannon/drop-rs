@@ -19,17 +19,18 @@ pub mod call_auth;
 pub mod call_process;
 
 /// main structure to manage api call
+/// 
 /// manages processing call values 
 /// from evaluated hcl block
-#[derive(Debug, Getters)]
+#[derive(Debug)]
 pub struct DropCall {
     // pub drop_meta: DropMeta, // -> DropId
     pub drop_id: DropId,
-    method: String,
-    base_url: String,
-    path: String,
+    pub method: Method,
+    pub base_url: String,
+    pub path: String,
     pub headers: HeaderMap,          
-    body: Option<serde_json::Value>, 
+    pub body: Option<serde_json::Value>, 
     pub outputs: Option<Vec<Traversal>>,
     pub after_action_config: AfterActionConfig,
     pub asserts: Vec<Assert>,
@@ -41,7 +42,7 @@ pub struct DropCall {
 
 impl DropCall {
     pub fn full_url(&self) -> String {
-        self.base_url().to_owned() + self.path()
+        self.base_url.to_owned() + &self.path
     }
 
     pub fn set_body(&mut self, body: &serde_json::Value) {
@@ -56,7 +57,7 @@ impl DropCall {
         DropCall {
             drop_id,
             // drop_meta: DropMeta::new(drop_id.to_owned()),
-            method: DropCall::match_method_from_string(block_type).to_string(),
+            method: DropCall::match_method_from_string(block_type),
             base_url: String::new(),
             path: String::new(),
             headers: HeaderMap::new(),

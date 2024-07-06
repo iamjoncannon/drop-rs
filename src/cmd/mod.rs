@@ -1,5 +1,8 @@
+use std::pin::Pin;
+
 use cli::Command;
 use commands::{hit::HitCommand, ok::OkCommand};
+use futures::{future::BoxFuture, Future};
 
 
 pub mod cli;
@@ -8,9 +11,11 @@ pub mod commands;
 
 pub trait DropCommand {
     fn announce(&self);
-    fn run(&self);
+    fn run(&self) -> Pin<Box<dyn Future<Output = ()>>>;
 }
 
+/// converts clap cli command into
+/// drop command structure
 pub struct CommandManager {}
 
 impl CommandManager {

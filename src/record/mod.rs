@@ -22,7 +22,7 @@ pub struct CallRecord {
 impl CallRecord {
     pub fn init(call: DropCall) -> CallRecord {
         CallRecord {
-            drop_id: call.drop_id().drop_id().unwrap(),
+            drop_id: call.drop_id.drop_id().unwrap(),
             full_url: call.full_url(),
             after_action_config: Some(call.after_action_config),
             status_code: None,

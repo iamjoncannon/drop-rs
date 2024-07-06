@@ -11,7 +11,7 @@ use crate::{
 /// final call block before execution
 #[derive(Debug)]
 pub struct DropRun {
-    pub call_drop_container: DropBlock,
+    pub call_drop_container: &'static DropBlock,
     pub input_index_map: IndexMap<String, Value>,
     pub env_var_scope: Context<'static>,
 }
@@ -23,7 +23,7 @@ impl DropRun {
         // final run may receive input variables from
         // previous runs
 
-        // todo- merge into input_index_map
+        // todo- merge into input_index_map during chain run
 
         Evaluator::insert_call_defaults_into_index_map(
             &self.call_drop_container,

@@ -1,46 +1,40 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use crate::s;
+use hcl::Value;
 use tokio::task::JoinSet;
 
-use super::drop_runner::DropRunner;
+use super::{drop_run::DropRun, drop_runner::DropRunner, RunPoolOutputMap};
 
-/// the pool that runs the entire 
+/// the pool that runs the entire
 /// set of DropRuns for the procedure
 pub struct RunPool {}
 
 impl RunPool {
-    pub async fn runner_pool() {
-        let result_mutex = Arc::new(Mutex::new(Vec::new()));
+    pub async fn runner_pool(mut drop_runs: Vec<DropRun>) {
+        let result_mutex = Arc::new(Mutex::new(RunPoolOutputMap::new()));
 
-        let mut run_list: Vec<DropRunner> = Vec::<DropRunner>::new();
+        let mut i = 0;
 
-        run_list.push(DropRunner {
-            message: s!("uno"),
-            id: 1,
-            depends_on: vec![],
-            result_mutex: Arc::clone(&result_mutex),
-            tx: None,
-            rx: None,
-        });
+        let mut run_list: Vec<DropRunner> = drop_runs
+            .drain(..)
+            .map(|drop_run| {
 
-        // run_list.push(DropRunner {
-        //     message: s!("dose"),
-        //     id: 2,
-        //     depends_on: vec![1],
-        //     result_mutex: Arc::clone(&result_mutex),
-        //     tx: None,
-        //     rx: None,
-        // });
-
-        // run_list.push(DropRunner {
-        //     message: s!("tres"),
-        //     id: 3,
-        //     depends_on: vec![1, 2],
-        //     result_mutex: Arc::clone(&result_mutex),
-        //     tx: None,
-        //     rx: None,
-        // });
+                i += 1;
+                
+                DropRunner {
+                    id: i,
+                    drop_run,
+                    result_mutex: Arc::clone(&result_mutex),
+                    tx: None,
+                    rx: None,
+                    depends_on: vec![],
+                }
+            })
+            .collect();
 
         let (tx, _) = tokio::sync::broadcast::channel::<i32>(run_list.capacity());
 
