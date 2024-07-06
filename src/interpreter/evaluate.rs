@@ -24,36 +24,40 @@ use log_derive::logfn;
 pub struct Evaluator {}
 
 impl Evaluator {
-    // / use variable context to evaluate the hcl block
-    // / for the selected call
-    #[logfn(
-        ok = "TRACE",
-        err = "ERROR",
-        fmt = "evaluate_call: {:?}",
-        log_ts = true
-    )]
-    pub fn evaluate_call(
+
+    // log_attributes
+    pub fn initialize_call(
         target_drop_id: &str,
-    ) -> Result<(hcl::Block, &'static DropBlock, EvalDiagnostics), anyhow::Error> {
-        let mut env_var_scope = Evaluator::get_module_dependencies_for_eval()?;
+    ) -> Result<(&'static DropBlock, Context), anyhow::Error> {
+
+        // initialize context from defaults
+        let mut env_var_scope = Evaluator::get_module_dependencies_for_eval(target_drop_id)?;
 
         // get call container for target
 
         let call_drop_container = Evaluator::get_selected_call_container(target_drop_id)?;
 
+        // insert inputs from call block into variable scope
         Evaluator::insert_call_defaults_into_index_map(
             call_drop_container,
-            &mut IndexMap::<String, hcl::Value>::new(),
+            &mut IndexMap::<String, hcl::Value>::new(), // blank set of inputs
             &mut env_var_scope,
         );
 
-        // evaluate call in context with all vars
-
-        let (evaluated_block, eval_diagnostics) =
-            Evaluator::evaluate_call_block_in_env(call_drop_container, &mut env_var_scope);
-
-        Ok((evaluated_block, call_drop_container, eval_diagnostics))
+        Ok((call_drop_container, env_var_scope))
     }
+
+    /// use variable context to evaluate the hcl block
+    // pub fn evaluate_call(
+    //     call_drop_container: DropBlock,
+    //     mut env_var_scope: Context
+    // ) -> Result<(hcl::Block, EvalDiagnostics), anyhow::Error> {
+
+    //     let (evaluated_block, eval_diagnostics) =
+    //         Evaluator::evaluate_call_block_in_env(&call_drop_container, &mut env_var_scope);
+
+    //     Ok((evaluated_block, eval_diagnostics))
+    // }
 
     #[logfn(
         ok = "TRACE",
@@ -61,8 +65,7 @@ impl Evaluator {
         fmt = "get_module_dependencies_for_eval: {:?}",
         log_ts = true
     )]
-    pub fn get_module_dependencies_for_eval<'l>() -> Result<Context<'l>, anyhow::Error> {
-        let target_drop_id = CmdContext::get_target_id()?;
+    pub fn get_module_dependencies_for_eval<'l>(target_drop_id: &str) -> Result<Context<'l>, anyhow::Error> {
 
         // get selected module structure
         let selected_module_block = Evaluator::get_selected_module_block(target_drop_id)?;
@@ -177,7 +180,7 @@ impl Evaluator {
         });
     }
 
-    fn insert_call_defaults_into_index_map(
+    pub fn insert_call_defaults_into_index_map(
         call_drop_container: &DropBlock,
         input_index_map: &mut IndexMap<String, Value>,
         env_var_scope: &mut Context<'_>,

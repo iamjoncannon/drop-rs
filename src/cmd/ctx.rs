@@ -1,20 +1,22 @@
 use std::sync::OnceLock;
 use anyhow::anyhow;
 
+use super::cli::{Cli, Command};
+
 static GLOBAL_CMD_CTX_PROVIDER: OnceLock<CmdContext> = OnceLock::new();
 
 #[derive(Debug)]
 pub struct CmdContext{
-    pub input_drop_id: Option<&'static String>,
-    // pub drop_id: DropId
-    // pub dropfile_dir: String
-    // Cli
-    // Commands
+    cli: Cli,
 }
 
 impl CmdContext {
 
-    pub fn set(cmd: CmdContext){
+    pub fn set(cli: Cli) {
+
+        log::debug!("CmdContext set {cli:?}");
+
+        let cmd = CmdContext { cli };
 
         let cell_set_result = GLOBAL_CMD_CTX_PROVIDER.set(cmd);
 
@@ -36,8 +38,16 @@ impl CmdContext {
         }
     }
 
-    pub fn get_target_id() -> Result<&'static str, anyhow::Error> {
-        let cmd = CmdContext::get()?;
-        Ok(cmd.input_drop_id.unwrap())
+    pub fn get_env() -> &'static str {
+
+        let cmd = CmdContext::get();
+
+        if cmd.is_err() {
+            log::warn!("error unwrapping CmdContext {:?}", cmd.unwrap_err());
+
+            "base"
+        } else {
+            &cmd.unwrap().cli.env
+        }
     }
 }

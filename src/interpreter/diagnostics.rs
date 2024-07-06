@@ -21,6 +21,10 @@ impl EvalDiagnostics {
         }
     }
 
+    pub fn is_err(&self) -> bool {
+        self.errors.is_some()
+    }
+
     pub fn evaluate_errors(&mut self, errors: &Errors) {
         let mut errors_surfaced_to_caller_for_handling = Vec::<hcl::eval::Error>::new();
         let mut errors_to_panic_now = Vec::<hcl::eval::Error>::new();
@@ -29,6 +33,8 @@ impl EvalDiagnostics {
 
         for error in errors {
             let message = error.to_string();
+
+            trace!("evaluate_errors error message {message}");
 
             if message.contains("assert.") {
                 continue;
@@ -49,8 +55,6 @@ impl EvalDiagnostics {
                 errors_surfaced_to_caller_for_handling.push(error.to_owned());
                 continue;
             }
-
-            trace!("evaluate_errors error message {message}");
 
             if message.contains("undefined variable `secret`") {
                 self.print_input_secret_helpers();
@@ -82,6 +86,8 @@ impl EvalDiagnostics {
 
                 if let Some(error) = errors.first() {
                     let message = error.to_string();
+
+                    // todo- add file directory to message
 
                     println!(
                         "\n\nError evaluating environment variables: {message} \n\nSee file {}",

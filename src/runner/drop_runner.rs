@@ -4,11 +4,8 @@ use rand::Rng;
 use tokio::sync::broadcast::{self, error::SendError, Receiver, Sender};
 
 /// DropRunner manages the exchange
-/// between the underlying call
+/// between the DropRun
 /// and the thread pool
-///
-/// DropRun manages evaluating the
-/// final call block before execution
 #[derive(Debug)]
 pub struct DropRunner {
     pub message: String,
@@ -72,6 +69,9 @@ impl DropRunner {
         mutex =
             DropRunner::wait_for_dependencies(mutex, self.rx.unwrap(), self.depends_on, self.id)
                 .await;
+
+        // generate DropCall for api call from DropRun
+        // and input dependencies 
 
         DropRunner::api_call_placeholder();
 

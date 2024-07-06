@@ -11,6 +11,7 @@ static NON_MODULE_BLOCK_TYPES: &str = "global mod environment";
 static NO_LABEL_BLOCKS: &str = "global";
 pub static CALL_BLOCKS: &str = "get post put delete run chain";
 
+// structured data from user input hcl block
 #[derive(Debug)]
 pub struct DropBlock {
     pub drop_id: Option<DropId>,
