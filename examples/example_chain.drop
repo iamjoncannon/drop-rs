@@ -1,19 +1,19 @@
 mod = example
 
-chain_node "sign_up" {
+// chain_node "sign_up" {
     
-}
+// }
 
-chain_node "login" {
+// chain_node "login" {
     
-}
+// }
 
-chain_node "get_banana" {
+// chain_node "get_banana" {
     
-}
+// }
 
-chain "example_auth_chain" {
-    nodes = [
-        example_chain.chain_node.example_node_0
-    ]
-}
+// chain "example_auth_chain" {
+//     nodes = [
+//         example_chain.chain_node.example_node_0
+//     ]
+// }

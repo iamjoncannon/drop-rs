@@ -14,7 +14,11 @@ use super::{drop_run::DropRun, drop_runner::DropRunner, RunPoolOutputMap};
 pub struct RunPool {}
 
 impl RunPool {
+    #[log_attributes::log(debug, "{fn}")]
     pub async fn runner_pool(mut drop_runs: Vec<DropRun>) {
+
+        log::trace!("RunPool init {drop_runs:?}");
+
         let result_mutex = Arc::new(Mutex::new(RunPoolOutputMap::new()));
 
         let mut i = 0;
@@ -44,6 +48,8 @@ impl RunPool {
             run.tx = Some(tx.clone());
             run.rx = Some(tx.clone().subscribe());
         });
+
+        log::trace!("RunPool run_list {run_list:?}");
 
         let mut set = JoinSet::new();
 

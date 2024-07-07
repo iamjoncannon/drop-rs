@@ -5,14 +5,23 @@ use httpmock::prelude::*;
 fn main() {
     let server = MockServer::start();
 
-    let _example_mock = server.mock(|when, then| {
-        when.path("/some_path");
-        then.status(200).body("some body");
+    let _signup = server.mock(|when, then| {
+        when.path("/signup")
+            .method("POST")
+            .header("cloud_key", "my cloud key header");
+        then.status(200);
     });
 
-    let _hello_mock = server.mock(|when, then| {
-        when.path("/hello/standalone")
-            .header("auth", "valid_dev_auth");
+    let _login = server.mock(|when, then| {
+        when.path("/login").method("POST");
+        then.status(200).body("{ \"token\": \"secret_auth_token\"}");
+    });
+
+    let _get_bananas = server.mock(|when, then| {
+        when.path("/banana")
+            .method("GET")
+            .header("auth", "secret_auth_token")
+            .header("cloud_key", "my cloud key header");
         then.status(200);
     });
 

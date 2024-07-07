@@ -23,6 +23,71 @@ pub struct DropRunner {
 
 impl DropRunner {
 
+    #[log_attributes::log(debug, "{fn}")]
+    pub async fn run(mut self) -> i32 {
+
+        log::trace!("init DropRunner run: {self:?}");
+
+        let mut mutex = self.result_mutex;
+
+        mutex =
+            DropRunner::wait_for_dependencies(mutex, self.rx.unwrap(), self.depends_on, self.id)
+                .await;
+
+        // resolve run time call dependencies from previous chain
+
+        let inputs_from_dependencies = IndexMap::<String, hcl::Value>::new();
+
+        // evaluate 
+
+        let drop_call = self.drop_run.get_drop_call(inputs_from_dependencies);
+        
+        log::trace!("DropRunner drop_call: {drop_call:?}");
+
+        let caller = Caller {drop_call};
+
+        let call_record_res = caller.call();
+
+        log::debug!("call_record {call_record_res:?}");
+
+        if call_record_res.is_err() {
+            // report error to pool manager to 
+            // cancel dependency calls
+        } else {
+
+            let call_record = call_record_res.unwrap();
+
+            if !call_record.is_successful_call {
+                // report failure to pool manager
+            }
+
+            PostAction::run_post_action_callbacks(call_record);
+        }
+
+
+        // report output to global output hash
+        // mutex.lock().unwrap().push(self.id);
+
+        // broadcast the id of the completed task
+        // to trigger observation in remaining tasks
+        let send_res = self.tx.unwrap().send(self.id);
+
+        if send_res.is_err() {
+            match send_res.unwrap_err() {
+                SendError(e) => {
+                    log::trace!(
+                        "DropRunner::run task id {:?} send message response error: {:?}",
+                        self.id,
+                        e
+                    );
+                }
+            }
+        }
+
+        self.id
+    }
+
+    #[log_attributes::log(debug, "{fn}")]
     async fn wait_for_dependencies(
         mutex: RunPoolMutex,
         mut rx: Receiver<i32>,
@@ -71,61 +136,4 @@ impl DropRunner {
         mutex
     }
 
-    pub async fn run(mut self) -> i32 {
-        let mut mutex = self.result_mutex;
-
-        mutex =
-            DropRunner::wait_for_dependencies(mutex, self.rx.unwrap(), self.depends_on, self.id)
-                .await;
-
-        // resolve run time call dependencies from previous chain
-
-        let inputs_from_dependencies = IndexMap::<String, hcl::Value>::new();
-
-        // evaluate 
-
-        let drop_call = self.drop_run.get_drop_call(inputs_from_dependencies);
-        
-        let caller = Caller {drop_call};
-
-        let call_record_res = caller.call();
-
-        log::debug!("call_record {call_record_res:?}");
-
-        if call_record_res.is_err() {
-            // report error to pool manager to 
-            // cancel dependency calls
-        } else {
-
-            let call_record = call_record_res.unwrap();
-
-            if !call_record.is_successful_call {
-                // report failure to pool manager
-            }
-
-            PostAction::run_post_action_callbacks(call_record);
-        }
-
-
-        // report output to global output hash
-        // mutex.lock().unwrap().push(self.id);
-
-        // broadcast the id of the completed task
-        // to trigger observation in remaining tasks
-        let send_res = self.tx.unwrap().send(self.id);
-
-        if send_res.is_err() {
-            match send_res.unwrap_err() {
-                SendError(e) => {
-                    log::trace!(
-                        "DropRunner::run task id {:?} send message response error: {:?}",
-                        self.id,
-                        e
-                    );
-                }
-            }
-        }
-
-        self.id
-    }
 }

@@ -25,23 +25,33 @@ impl EvalDiagnostics {
         self.errors.is_some()
     }
 
+    #[log_attributes::log(trace, "exit {fn}")]
     pub fn evaluate_errors(&mut self, errors: &Errors) {
+        log::trace!("EvalDiagnostics evaluate_errors errors {errors:?}");
+
         let mut errors_surfaced_to_caller_for_handling = Vec::<hcl::eval::Error>::new();
         let mut errors_to_panic_now = Vec::<hcl::eval::Error>::new();
 
-        let total_errs = errors.len();
+        let mut total_errs = errors.len();
 
         for error in errors {
+            log::trace!(
+                "EvalDiagnostics evaluate_errors error {}",
+                error.to_string()
+            );
+
             let message = error.to_string();
 
-            // todo- handle variable error for 
-            // hit drop id in run 
+            // todo- handle variable error for
+            // hit drop id in run
 
             if message.contains("assert.") {
+                total_errs -= 1;
                 continue;
             }
 
             if message.contains("response.") {
+                total_errs -= 1;
                 continue;
             }
 
@@ -66,7 +76,6 @@ impl EvalDiagnostics {
             }
 
             trace!("evaluate_errors error message {message}");
-            
             errors_to_panic_now.push(error.to_owned());
         }
 
@@ -77,7 +86,9 @@ impl EvalDiagnostics {
 
             self.panic();
         } else {
-            self.errors = Some(errors_surfaced_to_caller_for_handling);
+            if !errors_surfaced_to_caller_for_handling.is_empty() {
+                self.errors = Some(errors_surfaced_to_caller_for_handling);
+            }
         }
     }
 
@@ -88,7 +99,9 @@ impl EvalDiagnostics {
                 self.print_input_calltime_warnings();
                 self.print_secret_calltime_warnings();
 
-                errors.iter().for_each(|error|{
+                log::trace!("EvalDiagnostics evaluate_errors panic {errors:?}");
+
+                errors.iter().for_each(|error| {
                     let message = error.to_string();
 
                     log::trace!("");
@@ -98,6 +111,7 @@ impl EvalDiagnostics {
                     );
                 });
 
+                log::trace!("panic");
                 std::process::exit(1);
             }
         }

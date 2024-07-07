@@ -5,6 +5,9 @@ global {
 
 mod "example" {
     cloud_key_header = { "cloud_key" : secrets.cloud_key_header }
+    auth_token_header = {"auth" : secrets.secret_auth_token }
 
     sign_up_path = "/signup"
+    login_path = "/login"
+    get_banana_path = "/banana"
 }

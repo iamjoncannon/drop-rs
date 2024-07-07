@@ -164,7 +164,7 @@ impl GlobalDropConfig {
     /// parse blocks and perform basic validation on properties,
     /// collect module declarations
     ///
-    #[log_attributes::log(trace, "{fn} file_name: {file_name} output: {return:?}")]
+    #[log_attributes::log(trace, "exit {fn} file_name: {file_name}")]
     pub fn collect_unevalulated_blocks(
         file_body: hcl::Body,
         file_name: &str,

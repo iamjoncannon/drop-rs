@@ -30,7 +30,7 @@ impl DropCommand for HitCommand {
         );
     }
 
-    #[log_attributes::log(debug, "{fn} {self:?}")]
+    #[log_attributes::log(debug, "{fn}")]
     fn run(&mut self) -> Pin<Box<dyn Future<Output = ()>>> {
         let drop_id = DropDown::drop_down(&self.input_drop_id_string);
 
@@ -52,6 +52,8 @@ impl DropCommand for HitCommand {
 }
 
 impl HitCommand {
+
+    #[log_attributes::log(debug, "{fn} {self:?}")]
     pub fn run_call(&self) -> Vec<DropRun> {
         // get default variable context
 

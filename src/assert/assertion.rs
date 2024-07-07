@@ -44,7 +44,7 @@ impl CallAssertion {
         }
     }
 
-    #[log_attributes::log(trace, "{fn} drop_id: {drop_id:?} assert:{assert:?} response_string: {response_string} response_headers: {response_headers:?}")]
+    #[log_attributes::log(trace, "exit {fn} drop_id: {drop_id:?} assert:{assert:?} response_string: {response_string} response_headers: {response_headers:?}")]
     fn run_assertion(
         drop_id: &str,
         assert: &Assert,

@@ -18,7 +18,10 @@ pub struct DropRun {
 
 impl DropRun {
 
+    #[log_attributes::log(debug, "{fn}")]
     pub fn get_drop_call(&mut self, inputs_from_dependencies: IndexMap<String, Value>) -> DropCall {
+
+        log::trace!("init DropRun get_drop_call: {self:?} inputs_from_dependencies: {inputs_from_dependencies:?}");
 
         let evaluated_block = self.evaluate_call_block_with_inputs(inputs_from_dependencies);
 
@@ -35,7 +38,10 @@ impl DropRun {
         self.evaluate_call_block_with_inputs(inputs_from_dependencies)
     }
 
+    #[log_attributes::log(debug, "{fn}")]
     pub fn evaluate_call_block_with_inputs(&mut self, inputs_from_dependencies: IndexMap<String, Value>) -> hcl::Block {
+
+        log::trace!("DropRun evaluate_call_block_with_inputs");
 
         // final run may receive input variables from
         // previous runs
@@ -52,6 +58,8 @@ impl DropRun {
             &self.call_drop_container,
             &mut self.env_var_scope,
         );
+
+        log::trace!("DropRun eval_diagnostics {eval_diagnostics:?}");
 
         if eval_diagnostics.is_err() {
             eval_diagnostics.panic();

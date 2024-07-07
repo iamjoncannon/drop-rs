@@ -6,7 +6,12 @@ use crate::{
     cmd::ctx::CmdContext,
     constants::MOD_OBJECT_VAR_PREFIX,
     parser::{
-        block_type::run::RunBlock, drop_block::DropBlock, drop_id::{CallType, DropId}, hcl_block::{HclBlock, HclObject}, types::DropBlockType, GlobalDropConfigProvider
+        block_type::run::RunBlock,
+        drop_block::DropBlock,
+        drop_id::{CallType, DropId},
+        hcl_block::{HclBlock, HclObject},
+        types::DropBlockType,
+        GlobalDropConfigProvider,
     },
 };
 use colored::Colorize;
@@ -24,15 +29,15 @@ use log_derive::logfn;
 pub struct Evaluator {}
 
 impl Evaluator {
-
     #[logfn(
         ok = "TRACE",
         err = "ERROR",
         fmt = "get_module_dependencies_for_eval: {:?}",
         log_ts = true
     )]
-    pub fn get_module_dependencies_for_eval<'l>(target_drop_id: &str) -> Result<Context<'l>, anyhow::Error> {
-
+    pub fn get_module_dependencies_for_eval<'l>(
+        target_drop_id: &str,
+    ) -> Result<Context<'l>, anyhow::Error> {
         // get selected module structure
         let selected_module_block = Evaluator::get_selected_module_block(target_drop_id)?;
 
@@ -70,9 +75,8 @@ impl Evaluator {
 
     pub fn get_selected_container(
         target_drop_id: &str,
-        call_type: CallType
+        call_type: CallType,
     ) -> Result<&'static DropBlock, anyhow::Error> {
-
         let global_config = GlobalDropConfigProvider::get();
 
         let vector = match call_type {
@@ -153,6 +157,7 @@ impl Evaluator {
         });
     }
 
+    #[log_attributes::log(trace, "exit {fn}")]
     pub fn insert_call_defaults_into_index_map(
         call_drop_container: &DropBlock,
         input_index_map: &mut IndexMap<String, Value>,
@@ -176,11 +181,11 @@ impl Evaluator {
         Scope::insert_object_into_hcl_context(env_var_scope, "inputs", input_index_map);
     }
 
+    #[log_attributes::log(trace, "exit {fn}")]
     pub fn evaluate_call_block_in_env(
         call_block: &DropBlock,
         env_var_scope: &mut Context<'_>,
     ) -> (hcl::Block, EvalDiagnostics) {
-
         let drop_id = &call_block.drop_id.as_ref().unwrap();
 
         // we have to clone here because evaluate in place
@@ -197,6 +202,8 @@ impl Evaluator {
                     file_name,
                 );
 
+                log::trace!("Evaluator::evaluate_call_block_in_env {block:?} {eval_diagnostics:?}");
+
                 (block, eval_diagnostics)
             }
             _ => panic!("failure evaluating hcl block {drop_id:?} in file {file_name}"),
@@ -210,9 +217,9 @@ impl Evaluator {
     ) -> (RunBlock, hcl::Block, EvalDiagnostics) {
         // evaluate run hcl block to support parameterizing inputs
         let mut hcl_block = run_container.hcl_block.as_ref().unwrap().to_owned();
-    
+
         let errors_from_evaluate_call = hcl_block.evaluate_in_place(env_var_scope);
-    
+
         let mut diag = EvalDiagnostics::new(&run_container.file_name);
 
         if errors_from_evaluate_call.is_err() {
@@ -223,8 +230,9 @@ impl Evaluator {
         }
 
         // generate drop block again to extract inputs
-        let run_block_res: Result<RunBlock, hcl::Error> = hcl::from_body(hcl_block.body().to_owned());
-    
+        let run_block_res: Result<RunBlock, hcl::Error> =
+            hcl::from_body(hcl_block.body().to_owned());
+
         match run_block_res {
             Ok(run_block) => (run_block, hcl_block, diag),
             Err(err) => {
@@ -237,17 +245,22 @@ impl Evaluator {
         }
     }
 
+    #[log_attributes::log(trace, "exit {fn}")]
     fn evaluate_user_defined_block_with_ctx(
         block: &mut hcl::Block,
         ctx: &Context<'_>,
         file_name: &str,
     ) -> EvalDiagnostics {
+        log::trace!("init Evaluator evaluate_user_defined_block_with_ctx ");
+
         let errors_from_evaluate_call = block.evaluate_in_place(ctx);
 
         let mut diag = EvalDiagnostics::new(file_name);
 
         if errors_from_evaluate_call.is_err() {
             let errors = errors_from_evaluate_call.unwrap_err();
+
+            log::trace!("Evaluator.evaluate_user_defined_block_with_ctx errors {errors:?}");
 
             diag.evaluate_errors(&errors);
         }
