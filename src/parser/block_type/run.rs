@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::parser::{drop_block::{DropBlock, DropBlockType, DropResourceType}, drop_id::DropId};
+use crate::parser::{drop_block::DropBlock, drop_id::DropId, types::{DropBlockType, DropResourceType}};
 
 
 #[derive(Deserialize, Serialize, Debug)]

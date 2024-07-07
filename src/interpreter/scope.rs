@@ -10,10 +10,7 @@ use log_derive::logfn;
 use crate::{
     constants::*,
     parser::{
-        constants::GLOBAL_MOD_BLOCK_KEY,
-        drop_block::{DropBlock, DropBlockType},
-        hcl_block::{HclBlock, HclObject},
-        GlobalDropConfigProvider,
+        constants::GLOBAL_MOD_BLOCK_KEY, drop_block::DropBlock, hcl_block::{HclBlock, HclObject}, types::DropBlockType, GlobalDropConfigProvider
     },
 };
 

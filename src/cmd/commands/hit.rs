@@ -6,7 +6,8 @@ use crate::{
     interpreter::evaluate::Evaluator,
     parser::{
         drop_block::DropBlock,
-        drop_id::{CallType, DropId}, hcl_block::HclBlock,
+        drop_id::{CallType, DropId},
+        hcl_block::HclBlock,
     },
     runner::{drop_run::DropRun, run_pool::RunPool},
 };
@@ -31,7 +32,6 @@ impl DropCommand for HitCommand {
 
     #[log_attributes::log(debug, "{fn} {self:?}")]
     fn run(&mut self) -> Pin<Box<dyn Future<Output = ()>>> {
-
         let drop_id = DropDown::drop_down(&self.input_drop_id_string);
 
         self.input_drop_id_string = drop_id;
@@ -41,17 +41,18 @@ impl DropCommand for HitCommand {
         // initialize call- generate single DropRun
         // and run pool
 
-        let drop_run = match call_type {
+        let drop_runs = match call_type {
             CallType::Hit => self.run_call(),
             CallType::Run => self.run_run(),
+            CallType::Chain => todo!(),
         };
 
-        Box::pin(RunPool::runner_pool(vec![drop_run]))
+        Box::pin(RunPool::runner_pool(drop_runs))
     }
 }
 
 impl HitCommand {
-    pub fn run_call(&self) -> DropRun {
+    pub fn run_call(&self) -> Vec<DropRun> {
         // get default variable context
 
         let mut env_var_scope_res =
@@ -71,14 +72,14 @@ impl HitCommand {
         // for a call, the input index is blank
         let input_index_map = IndexMap::<String, hcl::Value>::new();
 
-        DropRun {
+        vec![DropRun {
             call_drop_container: call_drop_container.unwrap(),
             input_index_map,
             env_var_scope: env_var_scope_res.unwrap(),
-        }
+        }]
     }
 
-    pub fn run_run(&self) -> DropRun {
+    pub fn run_run(&self) -> Vec<DropRun> {
         // get default variable context
 
         let mut env_var_scope_res =
@@ -125,17 +126,24 @@ impl HitCommand {
             }
         }
 
-        // get call container referenced on run block 
+        // get call container referenced on run block
 
-        let call_drop_container =
-            Evaluator::get_selected_container(call_drop_id, CallType::Hit);
+        let call_drop_container = Evaluator::get_selected_container(call_drop_id, CallType::Hit);
 
         // the runner will evaluate the final call block
 
-        DropRun {
+        vec![DropRun {
             call_drop_container: call_drop_container.unwrap(),
             input_index_map,
             env_var_scope,
-        }
+        }]
+    }
+
+    pub fn run_chain(&self) -> Vec<DropRun> {
+
+        
+
+
+        todo!()
     }
 }

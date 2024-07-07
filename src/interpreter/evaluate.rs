@@ -6,7 +6,7 @@ use crate::{
     cmd::ctx::CmdContext,
     constants::MOD_OBJECT_VAR_PREFIX,
     parser::{
-        block_type::run::RunBlock, drop_block::{DropBlock, DropBlockType}, drop_id::{CallType, DropId}, hcl_block::{HclBlock, HclObject}, GlobalDropConfigProvider
+        block_type::run::RunBlock, drop_block::DropBlock, drop_id::{CallType, DropId}, hcl_block::{HclBlock, HclObject}, types::DropBlockType, GlobalDropConfigProvider
     },
 };
 use colored::Colorize;
@@ -78,6 +78,7 @@ impl Evaluator {
         let vector = match call_type {
             CallType::Hit => &global_config.hits,
             CallType::Run => &global_config.runs,
+            CallType::Chain => todo!(),
         };
 
         let matched_call: Vec<&'static DropBlock> = vector

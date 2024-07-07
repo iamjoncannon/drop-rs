@@ -1,3 +1,10 @@
+global {
+    user_name = "example_user_name"
+    user_password = "example_password"
+}
+
 mod "example" {
-    example_variable = "variable"
+    cloud_key_header = { "cloud_key" : secrets.cloud_key_header }
+
+    sign_up_path = "/signup"
 }

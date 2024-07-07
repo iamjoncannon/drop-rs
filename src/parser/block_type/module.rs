@@ -2,11 +2,12 @@ use hcl::Block;
 use hcl::Body;
 
 use crate::parser::drop_block::DropBlock;
-use crate::parser::drop_block::DropBlockType;
-use crate::parser::drop_block::DropResourceType;
 use crate::parser::drop_id::DropId;
 use crate::parser::hcl_block::HclObject;
+use crate::parser::types::DropBlockType;
+use crate::parser::types::DropResourceType;
 
+use super::BlockParser;
 
 pub struct DropModule {}
 
@@ -16,15 +17,23 @@ impl DropModule {
         drop_id: DropId,
         file_name: &str,
     ) -> Result<DropBlock, anyhow::Error> {
-        let body_res: HclObject = hcl::from_body(block.body.clone())?;
+        let body_res = hcl::from_body(block.body.clone());
 
-        Ok(DropBlock::new(
-            drop_id,
-            DropBlockType::Module(Some(body_res)),
-            Some(block),
-            file_name,
-            DropResourceType::Module,
-        ))
+        if body_res.is_err() {
+            let error_msg = body_res.unwrap_err().to_string();
+
+            Err(BlockParser::handle_block_parse_error(
+                &error_msg, &drop_id, file_name,
+            ))
+        } else {
+            Ok(DropBlock::new(
+                drop_id,
+                DropBlockType::Module(Some(body_res.unwrap())),
+                Some(block),
+                file_name,
+                DropResourceType::Module,
+            ))
+        }
     }
 
     pub fn get_module_declaration(file_body: &Body, _file_name: &str) -> Option<String> {

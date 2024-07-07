@@ -22,9 +22,9 @@ pub struct Cli {
     #[arg(short, long, default_value=".")]
     pub dir: String,
 
-    /// inputs
-    #[arg(short = 'i', long, value_parser = parse_key_val::<String, String>)]
-    pub input: Option<Vec<(String, String)>>,
+    // inputs
+    // #[arg(short = 'i', long, value_parser = parse_key_val::<String, String>)]
+    // pub input: Option<Vec<(String, String)>>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
@@ -37,18 +37,6 @@ pub enum LogLevelInput {
 #[derive(Subcommand, Debug, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum Command {
-    ///
-    /// list block(s) in env or module
-    ///
-    /// works similar to kubectl get
-    ///
-    /// e.g. `drop get env`
-    ///
-    /// e.g. `drop get mod`
-    // list {
-    //     /// `env` or `mod`
-    //     resource_type: String,
-    // },
 
     ///
     /// run a specific call, defined by the call id.
@@ -65,12 +53,6 @@ pub enum Command {
         /// either a module or the id of the call block to run
         drop_id: String,
     },
-
-    /// verify valid config files for environment
-    // ok {
-    //     /// the module to validate
-    //     drop_mod: Option<String>,
-    // },
 
     ///
     /// evaluate drop in env before running

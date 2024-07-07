@@ -5,11 +5,13 @@ use serde::{Deserialize, Serialize};
 use crate::parser::block_type::env::DropEnvironment;
 use crate::parser::block_type::module::DropModule;
 use crate::parser::constants::*;
-use crate::parser::{ hcl_block::HclBlock};
+use crate::parser::hcl_block::HclBlock;
 
 use super::block_type::call::CallBlock;
+use super::block_type::chain::{ChainBlock, ChainNode};
 use super::block_type::run::RunBlock;
-use super::{ drop_id::DropId, hcl_block::HclObject};
+use super::types::{DropBlockType, DropResourceType};
+use super::{drop_id::DropId, hcl_block::HclObject};
 
 static NON_MODULE_BLOCK_TYPES: &str = "global mod environment";
 static NO_LABEL_BLOCKS: &str = "global";
@@ -24,26 +26,6 @@ pub struct DropBlock {
     pub file_name: String,
     pub resource_type: DropResourceType,
     pub error: Option<anyhow::Error>,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub enum DropBlockType {
-    Call(CallBlock),
-    Module(Option<HclObject>),
-    Environment(HclObject), 
-    Run(RunBlock),
-                            // Chain(ChainBlock),
-                            // Object(ObjectBlock),
-}
-
-#[derive(Copy, Clone, Deserialize, Serialize, Debug, PartialEq, Eq, Hash)]
-pub enum DropResourceType {
-    Call,
-    Module,
-    Environment,
-    Run,
-    // Input,
-    // Chain,
 }
 
 impl DropBlock {
@@ -72,22 +54,14 @@ impl DropBlock {
         let block_type = &HclBlock::get_block_type(&hcl_block);
         let block_type = block_type.as_str();
 
-        let invalid_drop_file =
-            !NON_MODULE_BLOCK_TYPES.contains(block_type) && module_declaration.is_none();
-
-        if invalid_drop_file {
-            let panic_msg = format!(
-                "{}- please add a module declaration (e.g. {}) to file {}.",
-                "Invalid drop_file", "'mod = nasa'", file_name
-            );
-            panic!("{panic_msg}")
-        }
+        DropBlock::validate_drop_file(block_type, &module_declaration, file_name);
 
         let module_declaration = module_declaration.unwrap_or("mod");
 
         // get drop_id
         let labels = HclBlock::get_block_labels(&hcl_block);
 
+        // todo- move into method
         let block_title = if labels.is_empty() {
             if !NO_LABEL_BLOCKS.contains(block_type) {
                 println!("{file_name} block {block_type} must have a label");
@@ -102,6 +76,7 @@ impl DropBlock {
             labels[0].as_str()
         };
 
+        // todo- move into method
         let drop_id: String = if CALL_BLOCKS.contains(block_type) {
             format!("{module_declaration}.{block_type}.{block_title}")
         } else {
@@ -122,34 +97,25 @@ impl DropBlock {
             )
         };
 
-        let call_block = |method: &str| {
-            CallBlock::get_drop_block(
+        let drop_resource_type = DropResourceType::from_string(block_type, file_name)?;
+
+        match drop_resource_type {
+            DropResourceType::Call => CallBlock::get_drop_block(
                 hcl_block.clone(),
-                DropId::get_call_drop_id(method, module_declaration, block_title),
+                DropId::get_call_drop_id(block_type, module_declaration, block_title),
                 file_name,
-            )
-        };
-
-        match block_type {
-            POST_BLOCK_KEY => call_block("post"),
-            GET_BLOCK_KEY => call_block("get"),
-            PUT_BLOCK_KEY => call_block("patch"),
-            PATCH_BLOCK_KEY => call_block("put"),
-            DELETE_BLOCK_KEY => call_block("delete"),
-
-            MOD_BLOCK_KEY | GLOBAL_MOD_BLOCK_KEY => DropModule::get_drop_block(
+            ),
+            DropResourceType::Module => DropModule::get_drop_block(
                 hcl_block,
                 get_drop_id(DropResourceType::Module),
                 file_name,
             ),
-
-            ENVIRONMENT_BLOCK_KEY => DropEnvironment::get_drop_block(
+            DropResourceType::Environment => DropEnvironment::get_drop_block(
                 hcl_block,
                 get_drop_id(DropResourceType::Environment),
                 file_name,
             ),
-
-            RUN_BLOCK_KEY => {
+            DropResourceType::Run => {
                 let drop_id_struct = DropId::new(
                     Some(module_declaration.to_string()),
                     DropResourceType::Run,
@@ -159,17 +125,41 @@ impl DropBlock {
 
                 RunBlock::get_run_block(hcl_block, drop_id_struct, file_name)
             }
-            // CHAIN_BLOCK_KEY => {
-            //     let drop_id_struct = DropId::new(
-            //         Some(module_declaration.to_string()),
-            //         DropResourceType::Chain,
-            //         Some("chain".to_string()),
-            //         block_title,
-            //     );
+            DropResourceType::Chain => {
+                let drop_id_struct = DropId::new(
+                    Some(module_declaration.to_string()),
+                    DropResourceType::Chain,
+                    Some("chain".to_string()),
+                    block_title,
+                );
 
-            //     get_chain_block(hcl_block, drop_id_struct, file_name)
-            // }
-            _ => Err(anyhow!("invalid block type: {block_type} in {file_name}")),
+                ChainBlock::get_chain_block(hcl_block, drop_id_struct, file_name)
+            }
+            DropResourceType::ChainNode => {
+                let drop_id_struct = DropId::new(
+                    Some(module_declaration.to_string()),
+                    DropResourceType::ChainNode,
+                    Some("chain_node".to_string()),
+                    block_title,
+                );
+
+                ChainNode::get_chain_node_block(hcl_block, drop_id_struct, file_name)
+            },
+        }
+    }
+
+    fn validate_drop_file(block_type: &str, module_declaration: &Option<&str>, file_name: &str) {
+        let invalid_drop_file =
+            !NON_MODULE_BLOCK_TYPES.contains(block_type) && module_declaration.is_none();
+
+        if invalid_drop_file {
+            let panic_msg = format!(
+                "{}- please add a module declaration (e.g. {}) to file {}.",
+                "Invalid drop_file", "'mod = nasa'", file_name
+            );
+            log::trace!("");
+            println!("{panic_msg}");
+            std::process::exit(1)
         }
     }
 }

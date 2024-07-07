@@ -1,0 +1,37 @@
+mod = example
+
+get "example_call" {
+  base_url = env.user_base_url
+
+  path = join("/some_path", mod.example_variable)
+
+  headers = [{"my" : "header"}]
+
+  body = {
+    "thing" : "another thing"
+  }
+
+  assert = {
+    response.body = "some body"
+  }
+
+  outputs = [response.body]
+}
+
+post "example_signup" {
+  base_url = env.base_url
+
+  path = mod.sign_up_path
+
+  headers = [
+    mod.cloud_key_header
+  ]
+
+  body = {
+    "user_name": user_name,
+    "password": user_password
+  }
+
+  outputs = [response.body]
+
+}

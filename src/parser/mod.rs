@@ -1,10 +1,11 @@
-use std::{collections::HashSet, fs, path::PathBuf, sync::OnceLock};
-use colored::Colorize;
 use block_type::module::DropModule;
-use drop_block::{DropBlock, DropBlockType, DropResourceType};
+use colored::Colorize;
+use drop_block::DropBlock;
 use drop_id::DropId;
 use hcl::Body;
 use log_derive::logfn;
+use std::{collections::HashSet, fs, path::PathBuf, sync::OnceLock};
+use types::{DropBlockType, DropResourceType};
 
 pub mod block_type;
 pub mod constants;
@@ -12,13 +13,14 @@ pub mod drop_block;
 pub mod drop_id;
 pub mod file_walker;
 pub mod hcl_block;
+pub mod types;
 
 static GLOBAL_DROP_CONFIG_PROVIDER: OnceLock<GlobalDropConfig> = OnceLock::new();
 
-pub struct GlobalDropConfigProvider{}
+pub struct GlobalDropConfigProvider {}
 
-impl GlobalDropConfigProvider{
-    pub fn set(global_drop_config: GlobalDropConfig){
+impl GlobalDropConfigProvider {
+    pub fn set(global_drop_config: GlobalDropConfig) {
         let cell_set_result = GLOBAL_DROP_CONFIG_PROVIDER.set(global_drop_config);
         if cell_set_result.is_err() {
             log::error!(
@@ -39,6 +41,8 @@ impl GlobalDropConfigProvider{
 pub struct GlobalDropConfig {
     pub hits: Vec<DropBlock>,
     pub runs: Vec<DropBlock>,
+    pub chains: Vec<DropBlock>,
+    pub chain_nodes: Vec<DropBlock>,
     pub modules: Vec<DropBlock>,
     pub environments: Vec<DropBlock>,
 }
@@ -48,6 +52,8 @@ impl GlobalDropConfig {
         GlobalDropConfig {
             hits: Vec::new(),
             runs: Vec::new(),
+            chains: Vec::new(),
+            chain_nodes: Vec::new(),
             modules: Vec::new(),
             environments: Vec::new(),
         }
@@ -70,7 +76,6 @@ impl GlobalDropConfig {
             let mut res = GlobalDropConfig::collect_unevalulated_blocks(
                 body,
                 file_name,
-                // &mut unevaluated_blocks,
                 &mut file_level_module_declarations,
             )?;
 
@@ -81,10 +86,14 @@ impl GlobalDropConfig {
                 .collect();
 
             if !errors.is_empty() {
-                errors.iter().for_each(|err|{
-                    log::error!("error evaluating block: {:?}", err);
-                    std::process::exit(1)
-                })
+                
+                println!("\n");
+
+                errors.iter().for_each(|err| {
+                    log::warn!("{:?}\n", err);
+                });
+
+                // std::process::exit(1)
             }
 
             let success: Vec<DropBlock> = res
@@ -135,6 +144,8 @@ impl GlobalDropConfig {
                 DropResourceType::Run => global_drop_config.runs.push(container),
                 DropResourceType::Module => global_drop_config.modules.push(container),
                 DropResourceType::Environment => global_drop_config.environments.push(container),
+                DropResourceType::Chain => global_drop_config.chains.push(container),
+                DropResourceType::ChainNode => global_drop_config.chain_nodes.push(container),
             }
         }
 
@@ -195,31 +206,29 @@ impl GlobalDropConfig {
     }
 
     pub fn get_all_resource_type_in_modules(&self, selected_module: &str) -> Vec<String> {
-
         let get_resource_in_module = |drop_resource: DropResourceType| {
-
             let drop_blocks = match drop_resource {
                 DropResourceType::Call => &self.hits,
                 DropResourceType::Run => &self.runs,
-                DropResourceType::Module => todo!(),
-                DropResourceType::Environment => todo!(),
+                DropResourceType::Chain => &self.chains,
+                DropResourceType::ChainNode => &self.chain_nodes,
+                DropResourceType::Module => &self.modules,
+                DropResourceType::Environment => &self.environments,
             };
 
-            // let some_calls: Option<&Vec<DropBlock>> = block_map.get(&drop_resource);
-    
             if drop_blocks.is_empty() {
                 return vec![];
             }
-    
+
             let all_calls_in_modules: Vec<String> = drop_blocks
                 .iter()
                 .filter(|b| {
                     let module = &b.drop_id.as_ref().unwrap().module;
-    
+
                     if module.is_none() {
                         return false;
                     }
-    
+
                     let this_module = module.as_ref().unwrap();
                     selected_module == this_module
                 })
@@ -228,20 +237,25 @@ impl GlobalDropConfig {
                     full_addy.as_ref().unwrap().to_string()
                 })
                 .collect();
-    
+
             all_calls_in_modules
         };
-    
+
         let mut all_calls_in_modules: Vec<String> = get_resource_in_module(DropResourceType::Call);
         let all_runs_in_modules: Vec<String> = get_resource_in_module(DropResourceType::Run);
-        // let all_chains_in_modules: Vec<String> = get_resource_in_module(DropResourceType::Chain);
-    
+        let all_chains_in_modules: Vec<String> = get_resource_in_module(DropResourceType::Chain);
+
         all_calls_in_modules.extend(all_runs_in_modules);
-        // all_calls_in_modules.extend(all_chains_in_modules);
-    
+        all_calls_in_modules.extend(all_chains_in_modules);
+
+        if all_calls_in_modules.is_empty() {
+            log::trace!("");
+            log::error!("No calls found in module {}\n", selected_module.yellow());
+            std::process::exit(1);
+        }
+
         println!("calls in module: {}\n", selected_module.yellow());
-    
+
         all_calls_in_modules
     }
-    
 }

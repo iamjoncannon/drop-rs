@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use anyhow::anyhow;
-use super::drop_block::DropResourceType;
+
+use super::types::DropResourceType;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct DropId {
@@ -13,7 +14,7 @@ pub struct DropId {
 pub enum CallType {
     Hit,
     Run,
-    // Chain,
+    Chain,
 }
 
 impl DropId {
@@ -90,10 +91,13 @@ impl DropId {
         );
 
         match call {
-            // "chain" => CallType::Chain,
+            "chain" => CallType::Chain,
             "run" => CallType::Run,
             "get" | "post" | "delete" | "put" | "patch" => CallType::Hit,
-            _ => std::process::exit(1),
+            _ => {
+                log::trace!("");
+                log::error!("invalid call type in drop_id: {call}");
+                std::process::exit(1)},
         }
     }
 
@@ -103,8 +107,8 @@ impl DropId {
 
         match call_type {
             CallType::Hit => DropResourceType::Call,
-            CallType::Run => todo!(),
-            // CallType::Chain => todo!(),
+            CallType::Run => DropResourceType::Run,
+            CallType::Chain => DropResourceType::Chain,
         }
     }
 }
