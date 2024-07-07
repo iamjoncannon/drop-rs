@@ -1,21 +1,22 @@
 use std::pin::Pin;
 
 use cli::Command;
-use commands::{hit::HitCommand, ok::OkCommand};
+use commands::{give::GiveCommand, hit::HitCommand, secret::SecretCommand};
 use futures::{future::BoxFuture, Future};
 
 
 pub mod cli;
 pub mod ctx;
 pub mod commands;
+pub mod dropdown;
 
 pub trait DropCommand {
     fn announce(&self);
-    fn run(&self) -> Pin<Box<dyn Future<Output = ()>>>;
+    fn run(&mut self) -> Pin<Box<dyn Future<Output = ()>>>;
 }
 
 /// converts clap cli command into
-/// drop command structure
+/// drop command interface
 pub struct CommandManager {}
 
 impl CommandManager {
@@ -25,11 +26,8 @@ impl CommandManager {
 
         match command {
             Command::hit { drop_id } => Box::new(HitCommand{ input_drop_id_string: drop_id.to_string() }),
-            Command::give { drop_id } => todo!(),
-
-            Command::ok { drop_mod } => Box::new(OkCommand{ drop_mod: drop_mod.clone() }),
-            Command::secret { action, key, value } => todo!(),
-            Command::list { resource_type } => todo!(),
+            Command::give { drop_id } => Box::new(GiveCommand{ input_drop_id_string: drop_id.to_string() }),
+            Command::secret { action, key, value } => Box::new(SecretCommand{ action: action.to_string(), key: key.to_owned(), value: value.to_owned() }),
         }
     }
 }

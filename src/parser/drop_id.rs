@@ -40,7 +40,7 @@ impl DropId {
         )
     }
 
-    // returns entire drop id string
+    /// returns entire drop id string
     pub fn drop_id(&self) -> Result<String, anyhow::Error> {
         match &self.module {
             Some(_module) => {
@@ -59,7 +59,7 @@ impl DropId {
         }
     }
 
-    pub fn _is_drop_id(id: &str) -> bool {
+    pub fn is_drop_id(id: &str) -> bool {
         let split: Vec<&str> = id.split('.').collect();
 
         split.len() == 3

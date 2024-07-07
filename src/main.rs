@@ -39,7 +39,7 @@ async fn main() {
 
     setup_variable_scope(&cli.env);
 
-    let drop_command = CommandManager::get_command(command);
+    let mut drop_command = CommandManager::get_command(command);
 
     CmdContext::set(cli);
 

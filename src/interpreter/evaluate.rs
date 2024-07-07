@@ -6,10 +6,7 @@ use crate::{
     cmd::ctx::CmdContext,
     constants::MOD_OBJECT_VAR_PREFIX,
     parser::{
-        drop_block::{DropBlock, DropBlockType},
-        drop_id::{CallType, DropId},
-        hcl_block::{HclBlock, HclObject},
-        GlobalDropConfigProvider,
+        block_type::run::RunBlock, drop_block::{DropBlock, DropBlockType}, drop_id::{CallType, DropId}, hcl_block::{HclBlock, HclObject}, GlobalDropConfigProvider
     },
 };
 use colored::Colorize;
@@ -21,43 +18,12 @@ use indexmap::IndexMap;
 use log::trace;
 use log_derive::logfn;
 
+/// methods to evaluate hcl blocks
+/// with specific environment variables
+/// provided by user configuration
 pub struct Evaluator {}
 
 impl Evaluator {
-
-    // log_attributes
-    pub fn initialize_call(
-        target_drop_id: &str,
-    ) -> Result<(&'static DropBlock, Context), anyhow::Error> {
-
-        // initialize context from defaults
-        let mut env_var_scope = Evaluator::get_module_dependencies_for_eval(target_drop_id)?;
-
-        // get call container for target
-
-        let call_drop_container = Evaluator::get_selected_container(target_drop_id, CallType::Hit)?;
-
-        // insert inputs from call block into variable scope
-        Evaluator::insert_call_defaults_into_index_map(
-            call_drop_container,
-            &mut IndexMap::<String, hcl::Value>::new(), // blank set of inputs
-            &mut env_var_scope,
-        );
-
-        Ok((call_drop_container, env_var_scope))
-    }
-
-    /// use variable context to evaluate the hcl block
-    // pub fn evaluate_call(
-    //     call_drop_container: DropBlock,
-    //     mut env_var_scope: Context
-    // ) -> Result<(hcl::Block, EvalDiagnostics), anyhow::Error> {
-
-    //     let (evaluated_block, eval_diagnostics) =
-    //         Evaluator::evaluate_call_block_in_env(&call_drop_container, &mut env_var_scope);
-
-    //     Ok((evaluated_block, eval_diagnostics))
-    // }
 
     #[logfn(
         ok = "TRACE",
@@ -233,6 +199,40 @@ impl Evaluator {
                 (block, eval_diagnostics)
             }
             _ => panic!("failure evaluating hcl block {drop_id:?} in file {file_name}"),
+        }
+    }
+
+    pub fn evaluate_run_block_in_env(
+        run_container: &DropBlock,
+        env_var_scope: &Context<'_>,
+        run_drop_id: &str,
+    ) -> (RunBlock, hcl::Block, EvalDiagnostics) {
+        // evaluate run hcl block to support parameterizing inputs
+        let mut hcl_block = run_container.hcl_block.as_ref().unwrap().to_owned();
+    
+        let errors_from_evaluate_call = hcl_block.evaluate_in_place(env_var_scope);
+    
+        let mut diag = EvalDiagnostics::new(&run_container.file_name);
+
+        if errors_from_evaluate_call.is_err() {
+            let errors = errors_from_evaluate_call.unwrap_err();
+
+            // todo- enable evaluate errors for run
+            // diag.evaluate_errors(&errors);
+        }
+
+        // generate drop block again to extract inputs
+        let run_block_res: Result<RunBlock, hcl::Error> = hcl::from_body(hcl_block.body().to_owned());
+    
+        match run_block_res {
+            Ok(run_block) => (run_block, hcl_block, diag),
+            Err(err) => {
+                panic!(
+                    "error processing run block {}: {}",
+                    run_drop_id.yellow(),
+                    err
+                )
+            }
         }
     }
 

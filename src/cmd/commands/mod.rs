@@ -1,2 +1,3 @@
 pub mod hit;
-pub mod ok;
+pub mod give;
+pub mod secret;

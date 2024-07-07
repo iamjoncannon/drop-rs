@@ -84,7 +84,7 @@ impl DropRunner {
 
         // evaluate 
 
-        let drop_call = self.drop_run.evaluate(inputs_from_dependencies);
+        let drop_call = self.drop_run.get_drop_call(inputs_from_dependencies);
         
         let caller = Caller {drop_call};
 

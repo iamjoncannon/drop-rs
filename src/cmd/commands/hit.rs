@@ -2,17 +2,17 @@ use std::pin::Pin;
 
 use crate::{
     call::DropCall,
-    cmd::{ctx::CmdContext, DropCommand},
+    cmd::{ctx::CmdContext, dropdown::DropDown, DropCommand},
     interpreter::evaluate::Evaluator,
     parser::{
         drop_block::DropBlock,
-        drop_id::{CallType, DropId},
+        drop_id::{CallType, DropId}, hcl_block::HclBlock,
     },
     runner::{drop_run::DropRun, run_pool::RunPool},
 };
 use colored::Colorize;
 use futures::Future;
-use hcl::eval::Context;
+use hcl::eval::{Context, Evaluate};
 use indexmap::IndexMap;
 
 #[derive(Debug)]
@@ -30,7 +30,12 @@ impl DropCommand for HitCommand {
     }
 
     #[log_attributes::log(debug, "{fn} {self:?}")]
-    fn run(&self) -> Pin<Box<dyn Future<Output = ()>>> {
+    fn run(&mut self) -> Pin<Box<dyn Future<Output = ()>>> {
+
+        let drop_id = DropDown::drop_down(&self.input_drop_id_string);
+
+        self.input_drop_id_string = drop_id;
+
         let call_type = DropId::get_call_type_from_raw_drop_id(&self.input_drop_id_string);
 
         // initialize call- generate single DropRun
@@ -46,8 +51,7 @@ impl DropCommand for HitCommand {
 }
 
 impl HitCommand {
-    fn run_call(&self) -> DropRun {
-
+    pub fn run_call(&self) -> DropRun {
         // get default variable context
 
         let mut env_var_scope_res =
@@ -74,8 +78,7 @@ impl HitCommand {
         }
     }
 
-    fn run_run(&self) -> DropRun {
-
+    pub fn run_run(&self) -> DropRun {
         // get default variable context
 
         let mut env_var_scope_res =
@@ -85,12 +88,54 @@ impl HitCommand {
             panic!("error running call {}", self.input_drop_id_string);
         }
 
-        // get the run container for the drop id 
-        
-        let run_container = Evaluator::get_selected_container(&self.input_drop_id_string, CallType::Run);
+        // get the run container for the drop id
 
-        log::debug!("HitCommand run_run run_container {run_container:?}");
+        let run_container_res =
+            Evaluator::get_selected_container(&self.input_drop_id_string, CallType::Run);
 
-        todo!()
+        if run_container_res.is_err() {
+            panic!("error running call {}", self.input_drop_id_string);
+        }
+
+        log::debug!("HitCommand run_run run_container {run_container_res:?}");
+
+        // evaluate run hcl block with current env scope
+
+        let env_var_scope = env_var_scope_res.unwrap();
+
+        let (mut run_block, evaluated_run_hcl_block, eval_diagnostics) =
+            Evaluator::evaluate_run_block_in_env(
+                &run_container_res.unwrap(),
+                &env_var_scope,
+                &self.input_drop_id_string,
+            );
+
+        let call_drop_id = &run_block.get_drop_id_of_hit();
+
+        let inputs = run_block.inputs;
+
+        // pull input values from evaluated run block
+
+        let mut input_index_map = IndexMap::<String, hcl::Value>::new();
+
+        if let hcl::Expression::Object(exp_as_obj) = inputs {
+            for (key, mut value_as_exp) in exp_as_obj {
+                let _ = value_as_exp.evaluate_in_place(&env_var_scope);
+                input_index_map.insert(key.to_string(), HclBlock::value_from_expr(value_as_exp));
+            }
+        }
+
+        // get call container referenced on run block 
+
+        let call_drop_container =
+            Evaluator::get_selected_container(call_drop_id, CallType::Hit);
+
+        // the runner will evaluate the final call block
+
+        DropRun {
+            call_drop_container: call_drop_container.unwrap(),
+            input_index_map,
+            env_var_scope,
+        }
     }
 }

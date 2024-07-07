@@ -18,7 +18,24 @@ pub struct DropRun {
 
 impl DropRun {
 
-    pub fn evaluate(&mut self, inputs_from_dependencies: IndexMap<String, Value>) -> DropCall {
+    pub fn get_drop_call(&mut self, inputs_from_dependencies: IndexMap<String, Value>) -> DropCall {
+
+        let evaluated_block = self.evaluate_call_block_with_inputs(inputs_from_dependencies);
+
+        let drop_id: DropId = self.call_drop_container.drop_id.as_ref().unwrap().clone();
+
+        let drop_call = DropCall::from_hcl_block(&evaluated_block, drop_id);
+
+        drop_call
+    }
+
+    pub fn evaluate_call_block_with_blank_inputs(&mut self) -> hcl::Block {
+        let inputs_from_dependencies = IndexMap::<String, hcl::Value>::new();
+
+        self.evaluate_call_block_with_inputs(inputs_from_dependencies)
+    }
+
+    pub fn evaluate_call_block_with_inputs(&mut self, inputs_from_dependencies: IndexMap<String, Value>) -> hcl::Block {
 
         // final run may receive input variables from
         // previous runs
@@ -40,10 +57,6 @@ impl DropRun {
             eval_diagnostics.panic();
         }
 
-        let drop_id: DropId = self.call_drop_container.drop_id.as_ref().unwrap().clone();
-
-        let drop_call = DropCall::from_hcl_block(&evaluated_block, drop_id);
-
-        drop_call
+        (evaluated_block)
     }
 }

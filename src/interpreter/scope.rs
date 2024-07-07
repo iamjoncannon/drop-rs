@@ -34,16 +34,6 @@ impl GlobalScopeProvider{
         }
     }
 
-    pub fn _get() -> Result<&'static Context<'static>, anyhow::Error> {
-        let res = GLOBAL_SCOPE_PROVIDER.get();
-
-        if let Some(ctx) = res {
-            Ok(ctx)
-        } else {
-            Err(anyhow!("error accessing global cmd ctx"))
-        }
-    }
-
     pub fn get_mut() -> Result<Context<'static>, anyhow::Error> {
         let res = GLOBAL_SCOPE_PROVIDER.get();
 

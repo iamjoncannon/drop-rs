@@ -6,10 +6,10 @@ use crate::parser::{drop_block::{DropBlock, DropBlockType, DropResourceType}, dr
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct RunBlock {
-    hit: hcl::Traversal,
-    inputs: hcl::Expression,
-    outputs: Option<Vec<hcl::Traversal>>,
-    assert: Option<hcl::Object<hcl::ObjectKey, hcl::Expression>>,
+    pub hit: hcl::Traversal,
+    pub inputs: hcl::Expression,
+    pub outputs: Option<Vec<hcl::Traversal>>,
+    pub assert: Option<hcl::Object<hcl::ObjectKey, hcl::Expression>>,
 }
 
 impl RunBlock {

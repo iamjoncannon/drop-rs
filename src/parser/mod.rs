@@ -1,5 +1,5 @@
 use std::{collections::HashSet, fs, path::PathBuf, sync::OnceLock};
-
+use colored::Colorize;
 use block_type::module::DropModule;
 use drop_block::{DropBlock, DropBlockType, DropResourceType};
 use drop_id::DropId;
@@ -83,6 +83,7 @@ impl GlobalDropConfig {
             if !errors.is_empty() {
                 errors.iter().for_each(|err|{
                     log::error!("error evaluating block: {:?}", err);
+                    panic!()
                 })
             }
 
@@ -192,4 +193,55 @@ impl GlobalDropConfig {
 
         Ok(drop_block_conatiners)
     }
+
+    pub fn get_all_resource_type_in_modules(&self, selected_module: &str) -> Vec<String> {
+
+        let get_resource_in_module = |drop_resource: DropResourceType| {
+
+            let drop_blocks = match drop_resource {
+                DropResourceType::Call => &self.hits,
+                DropResourceType::Run => &self.runs,
+                DropResourceType::Module => todo!(),
+                DropResourceType::Environment => todo!(),
+            };
+
+            // let some_calls: Option<&Vec<DropBlock>> = block_map.get(&drop_resource);
+    
+            if drop_blocks.is_empty() {
+                return vec![];
+            }
+    
+            let all_calls_in_modules: Vec<String> = drop_blocks
+                .iter()
+                .filter(|b| {
+                    let module = &b.drop_id.as_ref().unwrap().module;
+    
+                    if module.is_none() {
+                        return false;
+                    }
+    
+                    let this_module = module.as_ref().unwrap();
+                    selected_module == this_module
+                })
+                .map(|b| {
+                    let full_addy = b.drop_id.as_ref().unwrap().drop_id();
+                    full_addy.as_ref().unwrap().to_string()
+                })
+                .collect();
+    
+            all_calls_in_modules
+        };
+    
+        let mut all_calls_in_modules: Vec<String> = get_resource_in_module(DropResourceType::Call);
+        let all_runs_in_modules: Vec<String> = get_resource_in_module(DropResourceType::Run);
+        // let all_chains_in_modules: Vec<String> = get_resource_in_module(DropResourceType::Chain);
+    
+        all_calls_in_modules.extend(all_runs_in_modules);
+        // all_calls_in_modules.extend(all_chains_in_modules);
+    
+        println!("calls in module: {}\n", selected_module.yellow());
+    
+        all_calls_in_modules
+    }
+    
 }

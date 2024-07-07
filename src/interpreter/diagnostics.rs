@@ -34,7 +34,8 @@ impl EvalDiagnostics {
         for error in errors {
             let message = error.to_string();
 
-            trace!("evaluate_errors error message {message}");
+            // todo- handle variable error for 
+            // hit drop id in run 
 
             if message.contains("assert.") {
                 continue;
@@ -63,6 +64,9 @@ impl EvalDiagnostics {
             if message.contains("undefined variable `input`") {
                 self.print_input_secret_helpers();
             }
+
+            trace!("evaluate_errors error message {message}");
+            
             errors_to_panic_now.push(error.to_owned());
         }
 

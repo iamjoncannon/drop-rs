@@ -45,10 +45,10 @@ pub enum Command {
     /// e.g. `drop get env`
     ///
     /// e.g. `drop get mod`
-    list {
-        /// `env` or `mod`
-        resource_type: String,
-    },
+    // list {
+    //     /// `env` or `mod`
+    //     resource_type: String,
+    // },
 
     ///
     /// run a specific call, defined by the call id.
@@ -67,10 +67,10 @@ pub enum Command {
     },
 
     /// verify valid config files for environment
-    ok {
-        /// the module to validate
-        drop_mod: Option<String>,
-    },
+    // ok {
+    //     /// the module to validate
+    //     drop_mod: Option<String>,
+    // },
 
     ///
     /// evaluate drop in env before running
