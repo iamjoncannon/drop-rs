@@ -88,18 +88,17 @@ impl EvalDiagnostics {
                 self.print_input_calltime_warnings();
                 self.print_secret_calltime_warnings();
 
-                if let Some(error) = errors.first() {
+                errors.iter().for_each(|error|{
                     let message = error.to_string();
 
-                    // todo- add file directory to message
-
-                    println!(
-                        "\n\nError evaluating environment variables: {message} \n\nSee file {}",
+                    log::trace!("");
+                    log::error!(
+                        "Error evaluating environment variables in file {}:\n{message}\n",
                         self.file_name.yellow()
                     );
+                });
 
-                    panic!("")
-                }
+                std::process::exit(1);
             }
         }
     }
