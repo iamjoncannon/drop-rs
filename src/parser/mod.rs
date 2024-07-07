@@ -68,13 +68,21 @@ impl GlobalDropConfig {
         for path_buf in drop_files {
             let file_name = path_buf.file_name().unwrap().to_str().unwrap();
 
+            log::debug!("from_drop_files file_name:{file_name}");
+
             let file = fs::read_to_string(path_buf)?;
-            let body = hcl::from_str(&file)?;
+            let body: Result<hcl::Body, hcl::Error>  = hcl::from_str(&file);
+
+            if body.is_err() {
+                println!("");
+                log::error!("error parsing file {}: \n{}\n", file_name.yellow(), body.unwrap_err().to_string().red());
+                std::process::exit(1)
+            }
 
             // warn if error in unevaluated block
 
             let mut res = GlobalDropConfig::collect_unevalulated_blocks(
-                body,
+                body.unwrap(),
                 file_name,
                 &mut file_level_module_declarations,
             )?;
