@@ -8,5 +8,5 @@ pub const GLOBAL_MOD_BLOCK_KEY: &str = "global";
 pub const MOD_BLOCK_KEY: &str = "mod";
 pub const ENVIRONMENT_BLOCK_KEY: &str = "environment";
 
-// pub const RUN_BLOCK_KEY: &str = "run";
+pub const RUN_BLOCK_KEY: &str = "run";
 // pub const CHAIN_BLOCK_KEY: &str = "chain";

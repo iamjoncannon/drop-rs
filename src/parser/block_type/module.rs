@@ -1,11 +1,12 @@
 use hcl::Block;
 use hcl::Body;
 
-use super::{
-    drop_block::{DropBlock, DropBlockType, DropResourceType},
-    drop_id::DropId,
-    hcl_block::HclObject,
-};
+use crate::parser::drop_block::DropBlock;
+use crate::parser::drop_block::DropBlockType;
+use crate::parser::drop_block::DropResourceType;
+use crate::parser::drop_id::DropId;
+use crate::parser::hcl_block::HclObject;
+
 
 pub struct DropModule {}
 

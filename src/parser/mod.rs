@@ -1,17 +1,15 @@
 use std::{collections::HashSet, fs, path::PathBuf, sync::OnceLock};
 
+use block_type::module::DropModule;
 use drop_block::{DropBlock, DropBlockType, DropResourceType};
 use drop_id::DropId;
-use drop_module::DropModule;
 use hcl::Body;
 use log_derive::logfn;
 
-pub mod call;
+pub mod block_type;
 pub mod constants;
 pub mod drop_block;
-pub mod drop_env;
 pub mod drop_id;
-pub mod drop_module;
 pub mod file_walker;
 pub mod hcl_block;
 
@@ -39,7 +37,8 @@ impl GlobalDropConfigProvider{
 /// to evaluation by interpreter
 #[derive(Debug)]
 pub struct GlobalDropConfig {
-    pub calls: Vec<DropBlock>,
+    pub hits: Vec<DropBlock>,
+    pub runs: Vec<DropBlock>,
     pub modules: Vec<DropBlock>,
     pub environments: Vec<DropBlock>,
 }
@@ -47,7 +46,8 @@ pub struct GlobalDropConfig {
 impl GlobalDropConfig {
     fn new() -> GlobalDropConfig {
         GlobalDropConfig {
-            calls: Vec::new(),
+            hits: Vec::new(),
+            runs: Vec::new(),
             modules: Vec::new(),
             environments: Vec::new(),
         }
@@ -130,7 +130,8 @@ impl GlobalDropConfig {
             let rt = container.resource_type;
 
             match rt {
-                DropResourceType::Call => global_drop_config.calls.push(container),
+                DropResourceType::Call => global_drop_config.hits.push(container),
+                DropResourceType::Run => global_drop_config.runs.push(container),
                 DropResourceType::Module => global_drop_config.modules.push(container),
                 DropResourceType::Environment => global_drop_config.environments.push(container),
             }

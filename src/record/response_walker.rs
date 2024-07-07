@@ -292,6 +292,7 @@ impl ResponseWalker {
     }
 }
 
+#[derive(Debug)]
 pub enum OutputType<'a> {
     EntireBody,
     EntireHeader,

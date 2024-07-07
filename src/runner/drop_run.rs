@@ -18,7 +18,7 @@ pub struct DropRun {
 
 impl DropRun {
 
-    fn evaluate(&mut self, inputs_from_dependencies: IndexMap<String, Value>) -> DropCall {
+    pub fn evaluate(&mut self, inputs_from_dependencies: IndexMap<String, Value>) -> DropCall {
 
         // final run may receive input variables from
         // previous runs

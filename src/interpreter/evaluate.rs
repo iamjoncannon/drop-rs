@@ -7,7 +7,7 @@ use crate::{
     constants::MOD_OBJECT_VAR_PREFIX,
     parser::{
         drop_block::{DropBlock, DropBlockType},
-        drop_id::DropId,
+        drop_id::{CallType, DropId},
         hcl_block::{HclBlock, HclObject},
         GlobalDropConfigProvider,
     },
@@ -35,7 +35,7 @@ impl Evaluator {
 
         // get call container for target
 
-        let call_drop_container = Evaluator::get_selected_call_container(target_drop_id)?;
+        let call_drop_container = Evaluator::get_selected_container(target_drop_id, CallType::Hit)?;
 
         // insert inputs from call block into variable scope
         Evaluator::insert_call_defaults_into_index_map(
@@ -102,26 +102,32 @@ impl Evaluator {
         Ok(matched_modules[0])
     }
 
-    pub fn get_selected_call_container(
+    pub fn get_selected_container(
         target_drop_id: &str,
+        call_type: CallType
     ) -> Result<&'static DropBlock, anyhow::Error> {
+
         let global_config = GlobalDropConfigProvider::get();
 
-        let matched_call: Vec<&'static DropBlock> = global_config
-            .calls
+        let vector = match call_type {
+            CallType::Hit => &global_config.hits,
+            CallType::Run => &global_config.runs,
+        };
+
+        let matched_call: Vec<&'static DropBlock> = vector
             .iter()
             .filter(|each| each.drop_id.as_ref().unwrap().drop_id().unwrap() == target_drop_id)
             .collect();
 
         assert!(
             !matched_call.is_empty(),
-            "No call block found for {}",
+            "No block found for {}",
             target_drop_id.yellow()
         );
 
         assert!(
             matched_call.len() == 1,
-            "Multiple call blocks found for {}",
+            "Multiple blocks found for {}",
             target_drop_id.yellow()
         );
 

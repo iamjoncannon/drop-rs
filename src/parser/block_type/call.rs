@@ -1,11 +1,8 @@
 use hcl::Block;
 use serde::{Deserialize, Serialize};
 
-use super::{
-    drop_block::{DropBlock, DropBlockType, DropResourceType},
-    drop_id::DropId,
-    hcl_block::HclObject,
-};
+use crate::parser::{drop_block::{DropBlock, DropBlockType, DropResourceType}, drop_id::DropId, hcl_block::HclObject};
+
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(deny_unknown_fields)]

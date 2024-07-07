@@ -2,10 +2,14 @@ use anyhow::anyhow;
 use hcl::{self, Block};
 use serde::{Deserialize, Serialize};
 
+use crate::parser::block_type::env::DropEnvironment;
+use crate::parser::block_type::module::DropModule;
 use crate::parser::constants::*;
-use crate::parser::{drop_module::DropModule, hcl_block::HclBlock};
+use crate::parser::{ hcl_block::HclBlock};
 
-use super::{call::CallBlock, drop_env::DropEnvironment, drop_id::DropId, hcl_block::HclObject};
+use super::block_type::call::CallBlock;
+use super::block_type::run::RunBlock;
+use super::{ drop_id::DropId, hcl_block::HclObject};
 
 static NON_MODULE_BLOCK_TYPES: &str = "global mod environment";
 static NO_LABEL_BLOCKS: &str = "global";
@@ -26,7 +30,8 @@ pub struct DropBlock {
 pub enum DropBlockType {
     Call(CallBlock),
     Module(Option<HclObject>),
-    Environment(HclObject), // Run(RunBlock),
+    Environment(HclObject), 
+    Run(RunBlock),
                             // Chain(ChainBlock),
                             // Object(ObjectBlock),
 }
@@ -36,7 +41,7 @@ pub enum DropResourceType {
     Call,
     Module,
     Environment,
-    // Run,
+    Run,
     // Input,
     // Chain,
 }
@@ -144,16 +149,16 @@ impl DropBlock {
                 file_name,
             ),
 
-            // RUN_BLOCK_KEY => {
-            //     let drop_id_struct = DropId::new(
-            //         Some(module_declaration.to_string()),
-            //         DropResourceType::Run,
-            //         Some("run".to_string()),
-            //         block_title,
-            //     );
+            RUN_BLOCK_KEY => {
+                let drop_id_struct = DropId::new(
+                    Some(module_declaration.to_string()),
+                    DropResourceType::Run,
+                    Some("run".to_string()),
+                    block_title,
+                );
 
-            //     get_run_block(hcl_block, drop_id_struct, file_name)
-            // }
+                RunBlock::get_run_block(hcl_block, drop_id_struct, file_name)
+            }
             // CHAIN_BLOCK_KEY => {
             //     let drop_id_struct = DropId::new(
             //         Some(module_declaration.to_string()),

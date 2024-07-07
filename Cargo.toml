@@ -6,7 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+# todo- delete this dependency
 derive-getters = { version = "0.4.0" }
+
 httpmock = { version = "0.7.0",  features = ["remote"] }
 isahc = "1.7.2"
 log = "0.4.22"

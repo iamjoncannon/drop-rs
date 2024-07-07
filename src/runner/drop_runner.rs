@@ -1,7 +1,10 @@
 use std::sync::{Arc, Mutex};
 
+use indexmap::IndexMap;
 use rand::Rng;
 use tokio::sync::broadcast::{self, error::SendError, Receiver, Sender};
+
+use crate::{action::PostAction, caller::Caller};
 
 use super::{drop_run::DropRun, RunPoolMutex, RunPoolOutputMap};
 
@@ -68,14 +71,41 @@ impl DropRunner {
         mutex
     }
 
-    pub async fn run(self) -> i32 {
+    pub async fn run(mut self) -> i32 {
         let mut mutex = self.result_mutex;
 
         mutex =
             DropRunner::wait_for_dependencies(mutex, self.rx.unwrap(), self.depends_on, self.id)
                 .await;
 
-        DropRunner::api_call_placeholder();
+        // resolve run time call dependencies from previous chain
+
+        let inputs_from_dependencies = IndexMap::<String, hcl::Value>::new();
+
+        // evaluate 
+
+        let drop_call = self.drop_run.evaluate(inputs_from_dependencies);
+        
+        let caller = Caller {drop_call};
+
+        let call_record_res = caller.call();
+
+        log::debug!("call_record {call_record_res:?}");
+
+        if call_record_res.is_err() {
+            // report error to pool manager to 
+            // cancel dependency calls
+        } else {
+
+            let call_record = call_record_res.unwrap();
+
+            if !call_record.is_successful_call {
+                // report failure to pool manager
+            }
+
+            PostAction::run_post_action_callbacks(call_record);
+        }
+
 
         // report output to global output hash
         // mutex.lock().unwrap().push(self.id);
@@ -97,13 +127,5 @@ impl DropRunner {
         }
 
         self.id
-    }
-    
-    fn api_call_placeholder() {
-        let mut rng = rand::thread_rng();
-
-        let millis = rng.gen_range(1..2000);
-
-        std::thread::sleep(std::time::Duration::from_millis(millis));
     }
 }

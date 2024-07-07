@@ -54,7 +54,7 @@ impl RunPool {
 
         while let Some(res) = set.join_next().await {
             if res.is_err() {
-                log::warn!("join error: {:?}", res.unwrap_err());
+                log::trace!("join error: {:?}", res.unwrap_err());
             } else {
                 let completed_id: i32 = res.unwrap();
                 log::trace!("RunPool completed task with id: {completed_id}");

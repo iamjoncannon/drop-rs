@@ -7,8 +7,8 @@ use response_walker::{OutputType, ResponseWalker};
 
 use crate::{action::AfterActionConfig, call::DropCall, parser::hcl_block::HclBlock, s};
 
-pub mod response_walker;
 mod output_record;
+pub mod response_walker;
 #[derive(Clone, Debug, Getters)]
 pub struct CallRecord {
     pub drop_id: String,
@@ -17,10 +17,11 @@ pub struct CallRecord {
     pub full_response: Option<String>,
     pub output_records: Option<Vec<OutputRecord>>,
     pub after_action_config: Option<AfterActionConfig>,
+    pub is_successful_call: bool,
 }
 
 impl CallRecord {
-    pub fn init(call: DropCall) -> CallRecord {
+    pub fn init(call: DropCall, is_successful_call: bool) -> CallRecord {
         CallRecord {
             drop_id: call.drop_id.drop_id().unwrap(),
             full_url: call.full_url(),
@@ -28,6 +29,7 @@ impl CallRecord {
             status_code: None,
             full_response: None,
             output_records: None,
+            is_successful_call
         }
     }
 
@@ -54,14 +56,25 @@ impl CallRecord {
                     let output_trav_as_str = HclBlock::traversal_to_string(output_trav);
 
                     match output_variant {
-                        OutputType::EntireBody => match &response_body_as_possible_json {
-                            Ok(response_as_possible_json) => {
-                                self.set_output(&output_trav_as_str, response_as_possible_json);
+                        OutputType::EntireBody => {
+                            match &response_body_as_possible_json {
+                                Ok(response_as_possible_json) => {
+                                    self.set_output(&output_trav_as_str, response_as_possible_json);
+                                }
+                                Err(err) => {
+                                    if err.to_string() == "expected value at line 1 column 1" {
+                                        // not json
+                                        self.set_output(
+                                            &output_trav_as_str,
+                                            &serde_json::Value::String(response_body.to_string()),
+                                        );
+                                    } else {
+                                        log::debug!("process_output_from_response error setting outputs {err}");
+                                        log::error!("error setting outputs {err}");
+                                    }
+                                }
                             }
-                            Err(err) => {
-                                error!("error setting outputs {err}");
-                            }
-                        },
+                        }
                         OutputType::Body => {
                             self.get_response_body_value(
                                 &self.drop_id().to_owned(),

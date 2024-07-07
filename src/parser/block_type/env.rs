@@ -1,7 +1,7 @@
 use hcl::Block;
 use serde::{Deserialize, Serialize};
 
-use super::{
+use crate::parser::{
     drop_block::{DropBlock, DropBlockType, DropResourceType},
     drop_id::DropId,
     hcl_block::HclObject,

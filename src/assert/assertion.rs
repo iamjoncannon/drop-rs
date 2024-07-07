@@ -1,7 +1,10 @@
 use colored::Colorize;
 use isahc::http::HeaderMap;
 
-use crate::{parser::hcl_block::HclBlock, record::response_walker::{JsonWalkError, OutputType, ResponseWalker}};
+use crate::{
+    parser::hcl_block::HclBlock,
+    record::response_walker::{JsonWalkError, OutputType, ResponseWalker},
+};
 
 use super::{
     assertions::{ArrayLengthAssertion, Assertion, NumericalAssertion, StringAssertion},
@@ -41,6 +44,7 @@ impl CallAssertion {
         }
     }
 
+    #[log_attributes::log(trace, "{fn} drop_id: {drop_id:?} assert:{assert:?} response_string: {response_string} response_headers: {response_headers:?}")]
     fn run_assertion(
         drop_id: &str,
         assert: &Assert,
@@ -50,6 +54,8 @@ impl CallAssertion {
         let traversal_to_test = &assert.traversal_key;
 
         let output_variant = ResponseWalker::get_output_variant(traversal_to_test);
+
+        log::trace!("output_variant {output_variant:?}");
 
         match output_variant {
             OutputType::EntireBody | OutputType::Body => CallAssertion::run_assertion_obj(
@@ -95,9 +101,9 @@ impl CallAssertion {
                     Err(walk_err) => CallAssertion::handle_walk_err_assertions(assert, &walk_err),
                 }
             }
-            Err(err) => AssertResultOutcome::FailureOnError(AssertionError::DeserializationError {
-                msg: format!("deserialization error: {err}"),
-            }),
+            Err(err) => {
+                CallAssertion::run_assertion_value(serde_json::Value::String(response_string.to_string()), assert)
+            }
         }
     }
 
