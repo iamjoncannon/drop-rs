@@ -160,7 +160,7 @@ impl Scope {
                     }
                 }
                 _ => {
-                    panic!();
+                    std::process::exit(1);
                 }
             }
         }

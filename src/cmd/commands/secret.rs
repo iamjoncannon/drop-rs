@@ -1,4 +1,9 @@
-use crate::{cmd::{ctx::CmdContext, DropCommand}, exit, parser::GlobalDropConfigProvider, persist::{Persister, PersisterProvider}};
+use crate::{
+    cmd::{ctx::CmdContext, DropCommand},
+    parser::GlobalDropConfigProvider,
+    persist::{Persister, PersisterProvider},
+    s,
+};
 use colored::Colorize;
 use std::{io, process};
 
@@ -16,7 +21,6 @@ impl DropCommand for SecretCommand {
     }
 
     fn run(&mut self) -> std::pin::Pin<Box<dyn futures::Future<Output = ()>>> {
-
         let env = CmdContext::get_env();
 
         let mut persister = PersisterProvider::get_lock_to_persister().unwrap();
@@ -28,29 +32,25 @@ impl DropCommand for SecretCommand {
         match action {
             "del" => match key {
                 Some(key) => persister.delete_secret_in_env(key, env),
-                None => exit!("must set key to delete"),
+                None => {
+                    println!("must set key to delete");
+                    std::process::exit(1)
+                }
             },
             "set" => {
                 assert!(
                     !(key.is_none() || value.is_none()),
                     "must include both a key and value for secret to set"
                 );
-    
                 let key = key.as_ref().unwrap();
                 let value = value.as_ref().unwrap();
-    
                 println!("Please confirm setting secret:\n\nenvironment {}\nkey {}\nvalue {}\n\n'Y' or 'y' to proceed, any other key to cancel.", env.yellow(), key.yellow(), value.yellow());
-    
                 let stdin = io::stdin();
                 let input = &mut String::new();
-    
                 loop {
                     input.clear();
-    
                     let _ = stdin.read_line(input);
-    
                     let input_val = (*input).to_string();
-    
                     let matcher = |answer: &str| match answer {
                         "y" | "Y" => true,
                         _ => {
@@ -58,14 +58,11 @@ impl DropCommand for SecretCommand {
                             process::exit(0)
                         }
                     };
-    
                     let is_confirmed = matcher(input_val.trim());
-    
                     if is_confirmed {
                         break;
                     }
                 }
-    
                 persister.insert_secret_into_env(key, value, env, false);
             }
             "get" => {
@@ -76,7 +73,9 @@ impl DropCommand for SecretCommand {
                 }
             }
             _ => {
-                panic!("invalid action passed to secret: {action}. Only valid actions are get and set")
+                panic!(
+                    "invalid action passed to secret: {action}. Only valid actions are get and set"
+                )
             }
         }
 

@@ -1,5 +1,7 @@
 #![allow(warnings)]
 
+use std::fmt;
+
 use clap::Parser;
 use cmd::{
     cli::{Cli, LogLevelInput},

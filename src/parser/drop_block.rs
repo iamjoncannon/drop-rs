@@ -91,7 +91,7 @@ impl DropBlock {
         let block_title = if labels.is_empty() {
             if !NO_LABEL_BLOCKS.contains(block_type) {
                 println!("{file_name} block {block_type} must have a label");
-                panic!();
+                std::process::exit(1);
             }
 
             match block_type {

@@ -52,7 +52,7 @@ impl SqlitePersister {
             }
             Err(err) => {
                 error!("SqlitePersister conn err {err:#?}");
-                panic!();
+                std::process::exit(1);
             }
         }
     }

@@ -58,7 +58,7 @@ impl GlobalInterpreterContext {
                     if let Value::Array(arr) = each {
                         if arr.len() != 2 {
                             println!("params can only have two members- key and value");
-                            panic!()
+                            std::process::exit(1)
                         }
 
                         let this_string =
@@ -106,7 +106,7 @@ impl GlobalInterpreterContext {
                     Ok(Value::String(buf))
                 }
                 _ => {
-                    panic!()
+                    std::process::exit(1)
                 }
             })
     }

@@ -43,8 +43,8 @@ impl PostActionAccessor {
         if let Some(ActionValue::Traversal(t)) = action_config.get(key) {
             return t;
         }
-        println!("{key:#?} not found in set action");
-        panic!();
+        log::error!("{key:#?} not found in set action");
+        std::process::exit(1)
     }
     
     pub fn get_bool_or_panic<'a>(
@@ -54,7 +54,7 @@ impl PostActionAccessor {
         if let ActionValue::Bool(t) = action_config.get(key).unwrap() {
             return *t;
         }
-        println!("{key:#?} not found in set action");
-        panic!()
+        log::error!("{key:#?} not found in set action");
+        std::process::exit(1)
     }
 }

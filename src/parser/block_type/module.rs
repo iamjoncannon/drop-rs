@@ -38,7 +38,7 @@ impl DropModule {
             if key != "mod" {
                 // return error
                 // trace!("{file_name} invalid module declaration {key}");
-                // panic!()
+                // std::process::exit(1)
                 return None;
             }
 
@@ -51,14 +51,14 @@ impl DropModule {
 
                 // return error
                 // trace!("{file_name} no module declaration");
-                // panic!()
+                // std::process::exit(1)
                 None
             }
         } else {
             // return error
             // trace!("{file_name} no module declaration");
             None
-            // panic!()
+            // std::process::exit(1)
         }
     }
 }

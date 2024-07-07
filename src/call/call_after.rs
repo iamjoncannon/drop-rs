@@ -20,7 +20,7 @@ impl DropCall {
             }
         } else {
             error!("{drop_id:#?}: after must be an array of after action objects");
-            panic!()
+            std::process::exit(1)
         }
     }
 
@@ -34,7 +34,7 @@ impl DropCall {
                 }
 
                 DropCall::after_throw(drop_id);
-                panic!()
+                std::process::exit(1)
             };
 
             let _action_id = get_action_id();
@@ -45,7 +45,7 @@ impl DropCall {
             self.after_action_config_push(drop_id, action_hash);
         } else {
             DropCall::after_throw(drop_id);
-            panic!()
+            std::process::exit(1)
         }
     }
 

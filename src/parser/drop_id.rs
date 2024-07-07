@@ -93,7 +93,7 @@ impl DropId {
             // "chain" => CallType::Chain,
             "run" => CallType::Run,
             "get" | "post" | "delete" | "put" | "patch" => CallType::Hit,
-            _ => panic!(),
+            _ => std::process::exit(1),
         }
     }
 

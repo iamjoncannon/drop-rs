@@ -83,7 +83,7 @@ impl GlobalDropConfig {
             if !errors.is_empty() {
                 errors.iter().for_each(|err|{
                     log::error!("error evaluating block: {:?}", err);
-                    panic!()
+                    std::process::exit(1)
                 })
             }
 

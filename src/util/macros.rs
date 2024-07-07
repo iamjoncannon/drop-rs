@@ -22,12 +22,3 @@ macro_rules! s {
         $value.to_string()
     }};
 }
-
-#[macro_export]
-#[doc = "panic and exit"]
-macro_rules! exit {
-    ($value:tt) => {{
-        println!($value);
-        std::process::exit(1)
-    }};
-}

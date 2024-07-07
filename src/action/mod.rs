@@ -25,7 +25,7 @@ impl PostAction {
 
         let throw = || {
             error!("invalid after action objects");
-            panic!();
+            std::process::exit(1);
         };
 
         match exp {

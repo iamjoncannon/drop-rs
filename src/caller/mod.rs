@@ -21,11 +21,13 @@ impl Caller {
         let response_result = if let Some(body) = &self.drop_call.body {
             let request = request_builder.body(serde_json::to_vec(body)?).unwrap();
             log::debug!("Caller request: {request:?}");
+            println!("\ncalling {}", request.uri());
             client.send(request)
         
         } else {
             let request = request_builder.body(()).unwrap();
             log::debug!("Caller request: {request:?}");
+            println!("calling {}", request.uri());
             client.send(request)
         };
 
@@ -39,8 +41,8 @@ impl Caller {
     pub fn generate_request_from_call(&self) -> Builder {
     
         let headers = &self.drop_call.headers;
-    
-        let mut request = Request::builder().method(&self.drop_call.method).uri(&self.drop_call.base_url);
+        let full_url = self.drop_call.base_url.to_string() + &self.drop_call.path;
+        let mut request = Request::builder().method(&self.drop_call.method).uri(full_url);
 
         for (k,v) in headers {
             request = request.header(k,v);

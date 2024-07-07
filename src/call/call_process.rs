@@ -56,13 +56,13 @@ impl DropCall {
                 } else {
                     let drop_id = self.drop_id.drop_id().unwrap();
                     error!("{drop_id:#?}: each output must be a variable ");
-                    panic!()
+                    std::process::exit(1)
                 }
             }
         } else {
             let drop_id = self.drop_id.drop_id().unwrap();
             error!("{drop_id:#?}: outputs must be an array of variables");
-            panic!()
+            std::process::exit(1)
         }
     }
 
@@ -82,7 +82,7 @@ impl DropCall {
         if hcl_as_serde_value.is_err() {
             let msg = hcl_as_serde_value.err();
             error!("{resource_name:#?}: request body must be a json object {msg:#?}");
-            panic!()
+            std::process::exit(1)
         }
 
         let valid_hcl_as_serde_value = hcl_as_serde_value.unwrap();
