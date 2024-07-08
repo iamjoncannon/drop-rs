@@ -1,19 +1,55 @@
 mod = example
 
-// chain_node "sign_up" {
-    
-// }
+chain_node "sign_up" {
 
-// chain_node "login" {
-    
-// }
+  hit = example.post.signup
 
-// chain_node "get_banana" {
-    
-// }
+  assert = {
+    response.headers.csrf_token = assert.exist
+  }
 
-// chain "example_auth_chain" {
-//     nodes = [
-//         example_chain.chain_node.example_node_0
-//     ]
-// }
+  # puts output into chain variable scope 
+  outputs = {
+    csrf_token = response.headers.csrf_token
+  }
+}
+
+chain_node "login" {
+  hit = example.post.login
+
+  inputs = {
+
+    # get input from global variables
+    user_name = user_name_1
+
+    # get input from chain variable scope
+    csrf_token = chain.csrf_token
+  }
+
+  # manually mark node as dependency
+  depends_on = [
+    example.chain_node.sign_up
+  ]
+
+  outputs = {
+    auth_token = response.body.token
+  }
+}
+
+chain_node "get_user" {
+  hit = example.get.user_for_chain
+
+  inputs = {
+    csrf_token = chain.csrf_token
+    auth_token = chain.auth_token
+  }
+}
+
+
+chain "example_auth_chain" {
+  nodes = [
+    example.chain_node.sign_up,
+    // example.chain_node.login,
+    // example.chain_node.get_user,
+  ]
+}

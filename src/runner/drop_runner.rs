@@ -15,24 +15,22 @@ use super::{drop_run::DropRun, RunPoolMutex, RunPoolOutputMap};
 pub struct DropRunner {
     pub id: i32,
     pub drop_run: DropRun,
-    pub depends_on: Vec<i32>,
+    pub depends_on: Vec<String>,
     pub result_mutex: Arc<Mutex<RunPoolOutputMap>>,
-    pub tx: Option<Sender<i32>>,
-    pub rx: Option<Receiver<i32>>,
+    pub tx: Sender<i32>,
+    pub rx: Receiver<i32>,
 }
 
 impl DropRunner {
 
     #[log_attributes::log(debug, "{fn}")]
-    pub async fn run(mut self) -> i32 {
+    pub async fn run(&mut self) -> i32 {
 
         log::trace!("init DropRunner run: {self:?}");
 
-        let mut mutex = self.result_mutex;
+        // let mut mutex = self.result_mutex;
 
-        mutex =
-            DropRunner::wait_for_dependencies(mutex, self.rx.unwrap(), self.depends_on, self.id)
-                .await;
+        self.wait_for_dependencies().await;
 
         // resolve run time call dependencies from previous chain
 
@@ -70,7 +68,7 @@ impl DropRunner {
 
         // broadcast the id of the completed task
         // to trigger observation in remaining tasks
-        let send_res = self.tx.unwrap().send(self.id);
+        let send_res = self.tx.send(self.id);
 
         if send_res.is_err() {
             match send_res.unwrap_err() {
@@ -89,38 +87,38 @@ impl DropRunner {
 
     #[log_attributes::log(debug, "{fn}")]
     async fn wait_for_dependencies(
-        mutex: RunPoolMutex,
-        mut rx: Receiver<i32>,
-        depends_on: Vec<i32>,
-        id: i32,
-    ) -> RunPoolMutex {
+        &mut self,
+    )  {
 
-        if depends_on.is_empty() {
-            log::trace!("DropRunner task {id:?} dependencies resolved, starting.");
-            return mutex;
+        let drop_id = self.drop_run.call_drop_container.drop_id.as_ref().unwrap().drop_id().unwrap();
+
+        if self.depends_on.is_empty() {
+            log::trace!("DropRunner task {drop_id} dependencies resolved, starting." );
+            return;
         }
 
         loop {
-            match rx.recv().await {
+            match self.rx.recv().await {
                 // the message itself is simply
                 // to trigger an observation of the result hash
                 Ok(_recvd) => {
-                    let unlocked = mutex.lock().unwrap();
+                    let unlocked_hash_map = self.result_mutex.lock().unwrap();
+
+                    let keys:Vec<String> = unlocked_hash_map.keys().map(|key| key.to_string()).collect();
 
                     let mut completed = true;
 
-                    for dependency in depends_on.iter() {
-                        
-                        // logic to resolve dependencies
-                        // from previous chain run 
-
+                    for dependency in self.depends_on.iter() {
+                        if!keys.contains(&dependency.to_string()) {
+                            completed = false;
+                        }
                     }
 
                     if completed {
                         log::trace!(
-                            "DropRunner task complete id: {id:?} dependencies: {:?} completed: {:?}",
-                            depends_on,
-                            unlocked
+                            "DropRunner task complete id: {drop_id:?} dependencies: {:?} completed: {:?}",
+                            self.depends_on,
+                            unlocked_hash_map
                         );
 
                         break;
@@ -133,7 +131,6 @@ impl DropRunner {
             }
         }
 
-        mutex
     }
 
 }

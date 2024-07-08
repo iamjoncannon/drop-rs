@@ -23,37 +23,36 @@ impl RunPool {
 
         let mut i = 0;
 
+        let (tx, _) = tokio::sync::broadcast::channel::<i32>(drop_runs.capacity());
+
         let mut run_list: Vec<DropRunner> = drop_runs
             .drain(..)
-            .map(|drop_run| {
+            .map(|mut drop_run| {
 
                 i += 1;
+
+                let depends_on = if drop_run.depends_on.is_none() {
+                    drop_run.depends_on.take().unwrap()
+                } else {
+                    vec![]
+                };
                 
                 DropRunner {
                     id: i,
                     drop_run,
                     result_mutex: Arc::clone(&result_mutex),
-                    tx: None,
-                    rx: None,
-                    depends_on: vec![],
+                    tx: tx.clone(),
+                    rx: tx.clone().subscribe(),
+                    depends_on,
                 }
             })
             .collect();
-
-        let (tx, _) = tokio::sync::broadcast::channel::<i32>(run_list.capacity());
-
-        // give each run task a broadcast channel and receiver
-
-        run_list.iter_mut().for_each(move |run| {
-            run.tx = Some(tx.clone());
-            run.rx = Some(tx.clone().subscribe());
-        });
-
+   
         log::trace!("RunPool run_list {run_list:?}");
 
         let mut set = JoinSet::new();
 
-        for call_runner in run_list.drain(..) {
+        for mut call_runner in run_list.drain(..) {
             let future_to_run = async move { call_runner.run().await };
             let _abort_handle = set.spawn(future_to_run);
         }

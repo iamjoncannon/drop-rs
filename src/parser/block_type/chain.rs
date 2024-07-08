@@ -24,30 +24,28 @@ impl ChainBlock {
         let chain_block: Result<ChainBlock, hcl::Error> = hcl::from_body(hcl_block.body.clone());
 
         if chain_block.is_err() {
-
             let error_msg = chain_block.unwrap_err().to_string();
 
-            Err(BlockParser::handle_block_parse_error(&error_msg, &drop_id, file_name))
-
+            Err(BlockParser::handle_block_parse_error(
+                &error_msg, &drop_id, file_name,
+            ))
         } else {
-
-        Ok(DropBlock::new(
-            drop_id,
-            DropBlockType::Chain(chain_block.unwrap()),
-            Some(hcl_block),
-            file_name,
-            DropResourceType::Chain,
-        ))
-    }
+            Ok(DropBlock::new(
+                drop_id,
+                DropBlockType::Chain(chain_block.unwrap()),
+                Some(hcl_block),
+                file_name,
+                DropResourceType::Chain,
+            ))
+        }
     }
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ChainNode {
     pub hit: hcl::Traversal,
-    pub depends_on: Option<Vec<String>>,
-    pub inputs: Option<hcl::Object<hcl::ObjectKey, hcl::Expression>>,
-    pub outputs: Option<hcl::Object<hcl::ObjectKey, hcl::Expression>>,
+    pub inputs: Option<hcl::Expression>,
+    pub outputs: Option<hcl::Object<hcl::ObjectKey, hcl::Traversal>>,
     pub assert: Option<hcl::Object<hcl::ObjectKey, hcl::Expression>>,
 }
 
@@ -57,25 +55,23 @@ impl ChainNode {
         drop_id: DropId,
         file_name: &str,
     ) -> Result<DropBlock, anyhow::Error> {
-        let chain_node_block: Result<ChainNode, hcl::Error> = hcl::from_body(hcl_block.body.clone());
+        let chain_node_block: Result<ChainNode, hcl::Error> =
+            hcl::from_body(hcl_block.body.clone());
 
         if chain_node_block.is_err() {
-
             let error_msg = chain_node_block.unwrap_err().to_string();
 
-            Err(BlockParser::handle_block_parse_error(&error_msg, &drop_id, file_name))
-
+            Err(BlockParser::handle_block_parse_error(
+                &error_msg, &drop_id, file_name,
+            ))
         } else {
-
-        Ok(DropBlock::new(
-            drop_id,
-            DropBlockType::ChainNode(chain_node_block.unwrap()),
-            Some(hcl_block),
-            file_name,
-            DropResourceType::ChainNode,
-        ))
-
-    }
-
+            Ok(DropBlock::new(
+                drop_id,
+                DropBlockType::ChainNode(chain_node_block.unwrap()),
+                Some(hcl_block),
+                file_name,
+                DropResourceType::ChainNode,
+            ))
+        }
     }
 }

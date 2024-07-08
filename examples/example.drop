@@ -22,11 +22,11 @@ post "signup" {
     }
   ]
 
-  assert = {
-    response.headers.csrf_token = assert.exist
-  }
+  // assert = {
+  //   response.headers.csrf_token = assert.exist
+  // }
 
-  outputs = [response.headers.csrf_token]
+  // outputs = [response.headers.csrf_token]
 }
 
 # drop secret get 
@@ -40,9 +40,9 @@ post "login" {
   path = mod.login_path
 
   headers = [
-    mod.csrf_token_header,
-    { "user_name" : inputs.user_name},
-    { "user_password" : user_password},
+    { "csrf_token" : inputs.csrf_token },
+    { "user_name" : inputs.user_name },
+    { "user_password" : user_password },
   ]
 
   assert = {
@@ -67,12 +67,13 @@ post "login" {
     }
   ]
 
-  # default input is user_name_1
+  # default input
   inputs = {
-    user_name = user_name_1
+    user_name  = user_name_1
+    csrf_token = secrets.csrf_token
   }
 
-  outputs = [response.body.token]
+  outputs = [response.body.token, response.body.user_id]
 }
 
 run "login_user_2" {
@@ -81,6 +82,7 @@ run "login_user_2" {
 
   inputs = {
     user_name = user_name_2
+    csrf_token = secrets.csrf_token
   }
 
   assert = {
@@ -97,9 +99,28 @@ get "user" {
   path = mod.user_path
 
   headers = [
+    # can encapsulate headers
     mod.auth_token_header,
     mod.csrf_token_header
   ]
+
+  outputs = [response.body]
+}
+
+get "user_for_chain" {
+  base_url = env.base_url
+
+  path = mod.user_path
+
+  headers = [
+    { "csrf_token" : inputs.csrf_token },
+    { "auth" : inputs.auth_token }
+  ]
+
+  inputs = {
+    csrf_token = secrets.csrf_token
+    auth_token = secrets.secret_auth_token
+  }
 
   outputs = [response.body]
 }

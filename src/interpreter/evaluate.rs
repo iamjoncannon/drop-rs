@@ -7,11 +7,12 @@ use crate::{
     cmd::ctx::CmdContext,
     constants::MOD_OBJECT_VAR_PREFIX,
     parser::{
+        self,
         block_type::run::RunBlock,
         drop_block::DropBlock,
         drop_id::{CallType, DropId},
         hcl_block::{HclBlock, HclObject},
-        types::DropBlockType,
+        types::{DropBlockType, DropResourceType},
         GlobalDropConfigProvider,
     },
 };
@@ -76,14 +77,17 @@ impl Evaluator {
 
     pub fn get_selected_container(
         target_drop_id: &str,
-        call_type: CallType,
+        drop_resource_type: DropResourceType,
     ) -> Result<&'static DropBlock, anyhow::Error> {
         let global_config = GlobalDropConfigProvider::get();
 
-        let vector = match call_type {
-            CallType::Hit => &global_config.hits,
-            CallType::Run => &global_config.runs,
-            CallType::Chain => todo!(),
+        let vector = match drop_resource_type {
+            DropResourceType::Call => &global_config.hits,
+            DropResourceType::Module => &global_config.modules,
+            DropResourceType::Environment => &global_config.environments,
+            DropResourceType::Run => &global_config.runs,
+            DropResourceType::Chain => &global_config.chains,
+            DropResourceType::ChainNode => &global_config.chain_nodes,
         };
 
         let matched_call: Vec<&'static DropBlock> = vector
@@ -161,9 +165,8 @@ impl Evaluator {
     #[log_attributes::log(trace, "exit {fn}")]
     pub fn evaluate_input_block_and_create_index_map(
         inputs: hcl::Expression,
-        env_var_scope: &mut Context<'_>
-    ) -> IndexMap::<String, hcl::Value> {
-        
+        env_var_scope: &mut Context<'_>,
+    ) -> IndexMap<String, hcl::Value> {
         let mut input_index_map = IndexMap::<String, hcl::Value>::new();
 
         if let hcl::Expression::Object(exp_as_obj) = inputs {
@@ -205,30 +208,29 @@ impl Evaluator {
         }
     }
 
-    pub fn evaluate_run_block_in_env(
-        run_container: &DropBlock,
+    pub fn evaluate_block_in_env<DropBlockType: for<'de> serde::Deserialize<'de>>(
+        drop_block_container: &DropBlock,
         env_var_scope: &Context<'_>,
         run_drop_id: &str,
-    ) -> (RunBlock, hcl::Block, EvalDiagnostics) {
+    ) -> (DropBlockType, hcl::Block, EvalDiagnostics) {
         // evaluate run hcl block to support parameterizing inputs
-        let mut hcl_block = run_container.hcl_block.as_ref().unwrap().to_owned();
+        let mut hcl_block = drop_block_container.hcl_block.as_ref().unwrap().to_owned();
 
         let errors_from_evaluate_call = hcl_block.evaluate_in_place(env_var_scope);
 
-        let mut diag = EvalDiagnostics::new(&run_container.file_name);
+        let mut diag = EvalDiagnostics::new(&drop_block_container.file_name);
 
         if errors_from_evaluate_call.is_err() {
             let errors = errors_from_evaluate_call.unwrap_err();
 
-            // todo- enable evaluate errors for run
+            // todo- enable evaluate errors for run or chain node
             // diag.evaluate_errors(&errors);
         }
 
         // generate drop block again to extract inputs
-        let run_block_res: Result<RunBlock, hcl::Error> =
-            hcl::from_body(hcl_block.body().to_owned());
+        let block_res: Result<DropBlockType, hcl::Error> = hcl::from_body(hcl_block.body().to_owned());
 
-        match run_block_res {
+        match block_res {
             Ok(run_block) => (run_block, hcl_block, diag),
             Err(err) => {
                 panic!(

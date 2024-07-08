@@ -45,7 +45,10 @@ impl DropCommand for GiveCommand {
         let mut drop_run = match call_type {
             CallType::Hit => hit_command.run_call(),
             CallType::Run => hit_command.run_run(),
-            CallType::Chain => todo!(),
+            CallType::Chain => {
+                println!("\ngive chain unsupported\n");
+                std::process::exit(0);
+            },
         };
 
         // hit and run return 1 drop_run

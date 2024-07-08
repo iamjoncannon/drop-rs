@@ -12,6 +12,7 @@ use crate::constants::*;
 
 use crate::parser::drop_id::DropId;
 use crate::parser::hcl_block::HclBlock;
+use crate::runner::drop_run::CallBlockOverWrites;
 
 pub mod call_after;
 pub mod call_assert;
@@ -92,9 +93,10 @@ impl DropCall {
 
     pub fn from_call_and_run_hcl_block(
         call_block: &Block,
-        run_block: &Block,
+        call_block_overwrites: &CallBlockOverWrites,
         drop_id: DropId,
     ) -> DropCall {
+
         let mut call = DropCall::from_call_hcl_block(call_block, drop_id);
 
         // remove assert, after action, and output blocks
@@ -102,33 +104,16 @@ impl DropCall {
         call.outputs = Some(Vec::new());
         call.after_action_config = HashMap::new();
 
-        let get_attr = |key: &str|{
-            let target_attr: Vec<&Attribute> = run_block
-            .body()
-            .attributes()
-            .into_iter()
-            .filter(|attr| attr.key() == key)
-            .collect();
-
-            target_attr
-        };
-
-        let assert_attr = get_attr(CALL_ASSERT);
-
-        if !assert_attr.is_empty() {
-            call.process_assert_block(assert_attr[0]);
+        if call_block_overwrites.assert_attr.is_some() {
+            call.process_assert_block(&call_block_overwrites.assert_attr.as_ref().unwrap());
         }
 
-        let output_attr = get_attr(CALL_OUTPUT);
-
-        if !output_attr.is_empty() {
-            call.process_output_config(output_attr[0]);
+        if call_block_overwrites.output_attr.is_some() {
+            call.process_output_config(&call_block_overwrites.output_attr.as_ref().unwrap());
         }
 
-        let after_attr = get_attr(CALL_AFTER);
-
-        if !after_attr.is_empty() {
-            call.process_afters(after_attr[0]);
+        if call_block_overwrites.after_attr.is_some() {
+            call.process_afters(&call_block_overwrites.after_attr.as_ref().unwrap());
         }
 
         call
@@ -165,3 +150,4 @@ impl DropCall {
             .insert(drop_id.to_owned(), current_vec);
     }
 }
+
