@@ -1,0 +1,105 @@
+mod = example
+
+# drop hit example.post.signup
+
+post "signup" {
+  base_url = env.base_url
+
+  path = mod.sign_up_path
+
+  body = {
+    "user_name" : user_name_1,
+    "password" : user_password
+  }
+
+  after = [
+    {
+      "type" : "set_secret",
+      "input" : response.headers.csrf_token,
+      "key" : "csrf_token",
+      "env" : "base",
+      "overwrite" : true
+    }
+  ]
+
+  assert = {
+    response.headers.csrf_token = assert.exist
+  }
+
+  outputs = [response.headers.csrf_token]
+}
+
+# drop secret get 
+# Secret { key: "csrf_token", value: "secret_csrf_token", _env: "base" }
+
+# drop hit example.post.login
+
+post "login" {
+  base_url = env.base_url
+
+  path = mod.login_path
+
+  headers = [
+    mod.csrf_token_header,
+    { "user_name" : inputs.user_name},
+    { "user_password" : user_password},
+  ]
+
+  assert = {
+    response.body.token   = assert.exist
+    response.body.user_id = 42
+  }
+
+  after = [
+    {
+      "type" : "set_secret",
+      "input" : response.body.token,
+      "key" : "secret_auth_token",
+      "env" : "base",
+      "overwrite" : true
+    },
+    {
+      "type" : "set_secret",
+      "input" : response.body.user_id,
+      "key" : "user_id",
+      "env" : "base",
+      "overwrite" : true
+    }
+  ]
+
+  # default input is user_name_1
+  inputs = {
+    user_name = user_name_1
+  }
+
+  outputs = [response.body.token]
+}
+
+run "login_user_2" {
+
+  hit = example.post.login
+
+  inputs = {
+    user_name = user_name_2
+  }
+
+  assert = {
+    response.body.token   = assert.exist
+    response.body.user_id = 88
+  }
+
+  outputs = [response.body.user_id]
+}
+
+get "user" {
+  base_url = env.base_url
+
+  path = mod.user_path
+
+  headers = [
+    mod.auth_token_header,
+    mod.csrf_token_header
+  ]
+
+  outputs = [response.body]
+}

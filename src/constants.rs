@@ -31,6 +31,8 @@ pub const CALL_HEADERS: &str = "headers";
 pub const CALL_OUTPUT: &str = "outputs";
 // /// Property key for asserts in a call block.
 pub const CALL_ASSERT: &str = "assert";
+// /// Property key for asserts in a call block.
+pub const CALL_INPUTS: &str = "inputs";
 
 // /// internal variables \\\
 // /// Property key for the response in internal variables.

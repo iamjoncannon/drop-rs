@@ -142,7 +142,7 @@ impl CallRecord {
             }
             Err(err) => {
                 trace!("get_response_body_value deserializaiton error {err}");
-                error!("error setting {drop_id:#?} outputs");
+                error!("error setting {drop_id:#?} outputs {:?}", HclBlock::traversal_to_string(output_trav));
             }
         }
     }

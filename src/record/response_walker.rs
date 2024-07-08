@@ -39,7 +39,7 @@ impl ResponseWalker {
                                         OutputType::Header
                                     }
                                 },
-                                _ => OutputType::InvalidOutput("invalid output response variable- only valid values are response.body and response.header")
+                                _ => OutputType::InvalidOutput("invalid output response variable- only valid values are response.body and response.headers")
                             }
                         }
                         _ => OutputType::InvalidOutput("invalid output response variable"),

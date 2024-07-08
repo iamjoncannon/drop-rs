@@ -27,7 +27,6 @@ impl EvalDiagnostics {
 
     #[log_attributes::log(trace, "exit {fn}")]
     pub fn evaluate_errors(&mut self, errors: &Errors) {
-        log::trace!("EvalDiagnostics evaluate_errors errors {errors:?}");
 
         let mut errors_surfaced_to_caller_for_handling = Vec::<hcl::eval::Error>::new();
         let mut errors_to_panic_now = Vec::<hcl::eval::Error>::new();
@@ -35,10 +34,7 @@ impl EvalDiagnostics {
         let mut total_errs = errors.len();
 
         for error in errors {
-            log::trace!(
-                "EvalDiagnostics evaluate_errors error {}",
-                error.to_string()
-            );
+
 
             let message = error.to_string();
 
@@ -54,6 +50,16 @@ impl EvalDiagnostics {
                 total_errs -= 1;
                 continue;
             }
+
+            if message.contains("headers.") {
+                total_errs -= 1;
+                continue;
+            }
+
+            log::trace!(
+                "EvalDiagnostics evaluate_errors error {}",
+                error.to_string()
+            );
 
             if message.contains("secrets.") {
                 self.has_secret_error = true;

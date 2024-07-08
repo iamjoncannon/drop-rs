@@ -5,12 +5,15 @@ use isahc::{config::Configurable, http::{request::Builder, Error, HeaderMap}, Ht
 use crate::{assert::{assertion::CallAssertion, types::Assert}, call::DropCall, record::CallRecord};
 
 /// http transaction manager
+#[derive(Debug)]
 pub struct Caller {
     pub drop_call: DropCall
 }
 
 impl Caller {
     pub fn call(self) -> Result<CallRecord, anyhow::Error> {
+
+        log::debug!("Caller call: {:#?}", self);
 
         let client = HttpClient::builder()
             .timeout(Duration::from_secs(5))

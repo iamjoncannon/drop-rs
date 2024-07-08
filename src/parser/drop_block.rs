@@ -25,7 +25,6 @@ pub struct DropBlock {
     pub hcl_block: Option<hcl::Block>,
     pub file_name: String,
     pub resource_type: DropResourceType,
-    pub error: Option<anyhow::Error>,
 }
 
 impl DropBlock {
@@ -42,7 +41,6 @@ impl DropBlock {
             hcl_block,
             file_name: file_name.to_string(),
             resource_type,
-            error: None,
         }
     }
 

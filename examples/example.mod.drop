@@ -1,13 +1,14 @@
 global {
-    user_name = "example_user_name"
+    user_name_1 = "example_user_name_1"
+    user_name_2 = "example_user_name_2"
     user_password = "example_password"
 }
 
 mod "example" {
-    cloud_key_header = { "cloud_key" : secrets.cloud_key_header }
+    csrf_token_header = { "csrf_token" : secrets.csrf_token }
     auth_token_header = {"auth" : secrets.secret_auth_token }
 
     sign_up_path = "/signup"
     login_path = "/login"
-    get_banana_path = "/banana"
+    user_path = "/user"
 }

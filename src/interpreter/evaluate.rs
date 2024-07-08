@@ -3,6 +3,7 @@ use super::{
     scope::{GlobalScopeProvider, Scope},
 };
 use crate::{
+    call::DropCall,
     cmd::ctx::CmdContext,
     constants::MOD_OBJECT_VAR_PREFIX,
     parser::{
@@ -158,27 +159,21 @@ impl Evaluator {
     }
 
     #[log_attributes::log(trace, "exit {fn}")]
-    pub fn insert_call_defaults_into_index_map(
-        call_drop_container: &DropBlock,
-        input_index_map: &mut IndexMap<String, Value>,
-        env_var_scope: &mut Context<'_>,
-    ) {
-        let block = call_drop_container.hcl_block.as_ref().unwrap();
-        for attr in block.body().attributes() {
-            if attr.key() == "inputs" {
-                if let hcl::Expression::Object(expr_as_obj) = attr.expr() {
-                    for (key, val) in expr_as_obj {
-                        let key_as_str = key.to_string();
-                        if !input_index_map.contains_key(&key_as_str) {
-                            input_index_map
-                                .insert(key_as_str, HclBlock::value_from_expr(val.to_owned()));
-                        }
-                    }
-                }
+    pub fn evaluate_input_block_and_create_index_map(
+        inputs: hcl::Expression,
+        env_var_scope: &mut Context<'_>
+    ) -> IndexMap::<String, hcl::Value> {
+        
+        let mut input_index_map = IndexMap::<String, hcl::Value>::new();
+
+        if let hcl::Expression::Object(exp_as_obj) = inputs {
+            for (key, mut value_as_exp) in exp_as_obj {
+                let _ = value_as_exp.evaluate_in_place(&env_var_scope);
+                input_index_map.insert(key.to_string(), HclBlock::value_from_expr(value_as_exp));
             }
         }
 
-        Scope::insert_object_into_hcl_context(env_var_scope, "inputs", input_index_map);
+        input_index_map
     }
 
     #[log_attributes::log(trace, "exit {fn}")]

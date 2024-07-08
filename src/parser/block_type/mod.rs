@@ -1,3 +1,8 @@
+/// these structures are used in 
+/// various places during interpretation
+/// and the values themselves are used
+/// by the hcl parser to perform initial
+/// input validation
 pub mod call;
 pub mod chain;
 pub mod env;

@@ -156,7 +156,7 @@ impl PostAction {
                 }
 
                 if !matched {
-                    println!("{} not found in outputs", input.yellow());
+                    log::error!("{} error: {} not found in outputs", "post action set_secret".blue(), input.yellow());
                 }
             }
         };

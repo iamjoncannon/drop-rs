@@ -2,42 +2,39 @@ use core::panic;
 use std::collections::HashMap;
 
 use derive_getters::Getters;
-use hcl::{Block, Traversal};
+use hcl::{Attribute, Block, Traversal};
+use indexmap::IndexMap;
 use isahc::http::{HeaderMap, Method};
 
 use crate::action::{ActionValue, AfterActionConfig};
 use crate::assert::types::Assert;
-use crate::constants::{
-    CALL_AFTER, CALL_ASSERT, CALL_BASE_URL, CALL_BODY, CALL_HEADERS, CALL_OUTPUT, CALL_PATH, GET_BLOCK_IDENTIFIER, PATCH_BLOCK_IDENTIFIER, POST_BLOCK_IDENTIFIER
-};
+use crate::constants::*;
+
 use crate::parser::drop_id::DropId;
 use crate::parser::hcl_block::HclBlock;
 
 pub mod call_after;
 pub mod call_assert;
 pub mod call_auth;
+pub mod call_inputs;
 pub mod call_process;
 
 /// main structure to manage api call
-/// 
-/// manages processing call values 
+///
+/// manages processing call values
 /// from evaluated hcl block
 #[derive(Debug)]
 pub struct DropCall {
-    // pub drop_meta: DropMeta, // -> DropId
     pub drop_id: DropId,
     pub method: Method,
     pub base_url: String,
     pub path: String,
-    pub headers: HeaderMap,          
-    pub body: Option<serde_json::Value>, 
+    pub headers: HeaderMap,
+    pub body: Option<serde_json::Value>,
+    pub inputs: Option<IndexMap<String, hcl::Value>>,
     pub outputs: Option<Vec<Traversal>>,
     pub after_action_config: AfterActionConfig,
     pub asserts: Vec<Assert>,
-
-    // move into Call Runner
-    // pub result_mutex: Option<Arc<Mutex<HashMap<String, String>>>>,
-    // pub channel: Option<(Receiver<String>, Sender<String>)>,
 }
 
 impl DropCall {
@@ -56,23 +53,20 @@ impl DropCall {
     pub fn default(drop_id: DropId, block_type: &str) -> DropCall {
         DropCall {
             drop_id,
-            // drop_meta: DropMeta::new(drop_id.to_owned()),
             method: DropCall::match_method_from_string(block_type),
             base_url: String::new(),
             path: String::new(),
             headers: HeaderMap::new(),
             body: None,
             outputs: None,
+            inputs: None,
             after_action_config: HashMap::new(),
-            // result_mutex: None,
-            // channel: None,
             asserts: Vec::<Assert>::new(),
         }
     }
 
-    pub fn from_hcl_block(block: &Block, drop_id: DropId) -> DropCall {
+    pub fn from_call_hcl_block(block: &Block, drop_id: DropId) -> DropCall {
         let block_type = block.identifier();
-        let _block_label = block.labels();
         let block_body = block.body();
 
         let mut call = DropCall::default(drop_id, block_type);
@@ -87,9 +81,56 @@ impl DropCall {
                 CALL_AFTER => call.process_afters(attr),
                 CALL_BODY => call.process_body(block, block_type),
                 CALL_ASSERT => call.process_assert_block(attr),
-                _ => {}
+                CALL_INPUTS => call.process_input_block(attr),
+                _ => {
+                    log::warn!("invalid attribute found on call block {:?}", attr.key())
+                }
             }
         }
+        call
+    }
+
+    pub fn from_call_and_run_hcl_block(
+        call_block: &Block,
+        run_block: &Block,
+        drop_id: DropId,
+    ) -> DropCall {
+        let mut call = DropCall::from_call_hcl_block(call_block, drop_id);
+
+        // remove assert, after action, and output blocks
+        call.asserts = Vec::new();
+        call.outputs = Some(Vec::new());
+        call.after_action_config = HashMap::new();
+
+        let get_attr = |key: &str|{
+            let target_attr: Vec<&Attribute> = run_block
+            .body()
+            .attributes()
+            .into_iter()
+            .filter(|attr| attr.key() == key)
+            .collect();
+
+            target_attr
+        };
+
+        let assert_attr = get_attr(CALL_ASSERT);
+
+        if !assert_attr.is_empty() {
+            call.process_assert_block(assert_attr[0]);
+        }
+
+        let output_attr = get_attr(CALL_OUTPUT);
+
+        if !output_attr.is_empty() {
+            call.process_output_config(output_attr[0]);
+        }
+
+        let after_attr = get_attr(CALL_AFTER);
+
+        if !after_attr.is_empty() {
+            call.process_afters(after_attr[0]);
+        }
+
         call
     }
 
@@ -123,12 +164,4 @@ impl DropCall {
         self.after_action_config
             .insert(drop_id.to_owned(), current_vec);
     }
-
-    // pub fn remove_result_mutex(&mut self) -> Option<Arc<Mutex<HashMap<String, String>>>> {
-        // self.result_mutex.take()
-    // }
-
-    // pub fn remove_channel(&mut self) -> Option<(Receiver<String>, Sender<String>)> {
-    //     self.channel.take()
-    // }
 }

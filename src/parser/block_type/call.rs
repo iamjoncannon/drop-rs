@@ -9,14 +9,14 @@ use super::BlockParser;
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct CallBlock {
-    base_url: hcl::Expression,
-    path: Option<hcl::Expression>,
-    headers: Option<Vec<hcl::Expression>>,
-    body: Option<hcl::Expression>,
-    after: Option<Vec<HclObject>>,
-    outputs: Option<Vec<hcl::Traversal>>,
-    inputs: Option<hcl::Expression>,
-    assert: Option<hcl::Object<hcl::ObjectKey, hcl::Expression>>,
+    pub base_url: hcl::Expression,
+    pub path: Option<hcl::Expression>,
+    pub headers: Option<Vec<hcl::Expression>>,
+    pub body: Option<hcl::Expression>,
+    pub after: Option<Vec<HclObject>>,
+    pub outputs: Option<Vec<hcl::Traversal>>,
+    pub inputs: Option<hcl::Expression>,
+    pub assert: Option<hcl::Object<hcl::ObjectKey, hcl::Expression>>,
 }
 
 impl CallBlock {
