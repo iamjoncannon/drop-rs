@@ -8,7 +8,7 @@ post "signup" {
   path = mod.sign_up_path
 
   body = {
-    "user_name" : user_name_1,
+    "user_name" : inputs.user_name,
     "password" : user_password
   }
 
@@ -21,6 +21,10 @@ post "signup" {
       "overwrite" : true
     }
   ]
+
+  // inputs = {
+  //   user_name = user_name_1
+  // }
 
   // assert = {
   //   response.headers.csrf_token = assert.exist

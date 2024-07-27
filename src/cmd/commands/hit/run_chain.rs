@@ -74,6 +74,10 @@ impl HitCommand {
         drop_runs
     }
 
+    // take inputs from chain_node block
+    // if the input references the chain block, add the value to the
+    // chain_node depends_on property
+    // e.g. "chain.csrf_token" -> csrf_token
     pub fn map_chain_inputs_to_dependencies(&self, inputs: Option<hcl::Expression>){
 
         // csrf_token = chain.csrf_token

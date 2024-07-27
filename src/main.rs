@@ -27,6 +27,10 @@ mod record;
 mod runner;
 mod util;
 
+//
+// search feature- search for path 
+// add "description" and tags to dropdown so you
+
 #[tokio::main]
 async fn main() {
     setup_panic_handler();

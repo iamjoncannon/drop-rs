@@ -4,6 +4,10 @@ chain_node "sign_up" {
 
   hit = example.post.signup
 
+  inputs = {
+    user_name = chain.user_name_1
+  }
+
   assert = {
     response.headers.csrf_token = assert.exist
   }

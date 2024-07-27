@@ -1,4 +1,4 @@
-use inquire::{InquireError, Select};
+use inquire::{ui::RenderConfig, InquireError, Select};
 use log::trace;
 
 use crate::parser::{drop_id::DropId, GlobalDropConfigProvider};
@@ -31,6 +31,8 @@ impl DropDown {
         let options: Vec<&str> = drop_ids_in_env.iter().map(String::as_str).collect();
 
         let question = "Select drop";
+
+        // RenderConfig
 
         let selector = Select::new(question, options).with_page_size(50);
 
