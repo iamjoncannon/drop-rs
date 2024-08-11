@@ -1,4 +1,8 @@
-#![allow(warnings)]
+/// 
+/// this module is a proof of concept for a directed acyclic graph, 
+/// for use with an future end to end testing feature 
+/// 
+// #![allow(warnings)]
 
 use std::sync::{mpsc::channel, Arc, Mutex};
 

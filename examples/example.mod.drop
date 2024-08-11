@@ -1,10 +1,26 @@
+#
+# the variable scope chain:
+#
+# - global module
+# - secrets 
+# - environment
+# - module
+#
+
+# global variables accessible directly
 global {
     user_name_1 = "example_user_name_1"
     user_name_2 = "example_user_name_2"
     user_password = "example_password"
 }
 
+# module specific variables accessible as "mod.[variable]"
 mod "example" {
+
+    # a module can reference environment values
+    scope_chain_example = join(env.environment_key, "some value")
+    
+    # the module can reference secret values
     csrf_token_header = { "csrf_token" : secrets.csrf_token }
     auth_token_header = {"auth" : secrets.secret_auth_token }
 

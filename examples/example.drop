@@ -1,17 +1,51 @@
 mod = example
 
-# drop hit example.post.signup
+#
+# this file demonstrates a multi-call
+# workflow
+#
+# signup: retrieves a csrf_token and stores it
+#
+# login: uses the csrf_token to login user 
+# and receive an api token
+#
+# get user: uses the api token to make an api call
+#
 
+# 
+# drop hit example.post.signup
+#
+# this 'hit' can also be evaluated
+# without being run
+# drop give example.post.signup
+#
 post "signup" {
+
   base_url = env.base_url
 
   path = mod.sign_up_path
 
+  #
+  # hcl utility helpers for path values
+  #
+  # path = join( 
+  #   "/some/path",
+  #   url_params(
+  #     ["value", "value"],
+  #     ["end_date", inputs.[value]],
+  #   )
+  # )
+
+  # request body, which can be json
+  # or a combination of json and an 
+  # hcl variable
   body = {
     "user_name" : inputs.user_name,
     "password" : user_password
   }
 
+  # after call actions, in this case,
+  # storing a secret
   after = [
     {
       "type" : "set_secret",
@@ -22,15 +56,19 @@ post "signup" {
     }
   ]
 
-  // inputs = {
-  //   user_name = user_name_1
-  // }
+  # inputs to configure a 'run' block,
+  # with defined defaults
+  inputs = {
+    user_name = user_name_1
+  }
 
-  // assert = {
-  //   response.headers.csrf_token = assert.exist
-  // }
+  # example assertion
+  assert = {
+    response.headers.csrf_token = assert.exist
+  }
 
-  // outputs = [response.headers.csrf_token]
+  # output to print to the CLI 
+  outputs = [response.headers.csrf_token]
 }
 
 # drop secret get 
@@ -49,11 +87,20 @@ post "login" {
     { "user_password" : user_password },
   ]
 
+  #
+  # hcl utility helpers for headers
+  # 
+  # headers = [
+  #   { "authorization" : bearer(secrets.api_token) },
+  #   { "authorization" : basic_auth(username, password) },
+  # ]
+
   assert = {
     response.body.token   = assert.exist
     response.body.user_id = 42
   }
 
+  # set multiple variables
   after = [
     {
       "type" : "set_secret",
@@ -71,7 +118,6 @@ post "login" {
     }
   ]
 
-  # default input
   inputs = {
     user_name  = user_name_1
     csrf_token = secrets.csrf_token
@@ -92,6 +138,15 @@ run "login_user_2" {
   assert = {
     response.body.token   = assert.exist
     response.body.user_id = 88
+
+    # other supported assertions (see AssertExpectedValueObjectOperator)
+    # response.body.[variable] = assert.not_exist
+    # response.body.[variable] = true / false
+    # response.body.[variable]  = { assert.contains = [value] }
+    # response.body.[variable]  = { assert.starts_with = [value] }
+    # response.body.[variable]  = { assert.greater_than = [value] }
+    # response.body.[variable]  = { assert.less_than = [value] }
+    # response.body.[variable]  = { assert.length = [value] }
   }
 
   outputs = [response.body.user_id]
@@ -111,7 +166,7 @@ get "user" {
   outputs = [response.body]
 }
 
-get "user_for_chain" {
+get "user_with_input" {
   base_url = env.base_url
 
   path = mod.user_path
