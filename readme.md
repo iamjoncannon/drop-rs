@@ -205,4 +205,5 @@ Some differences:
 
 1. portability- compiled, requires no external dependencies to use locally or in CI/CD 
 2. reliability- modern type and null safety  
-3. memory safe concurrency- a major upcoming feature will be multi-call end-to-end testing, which will involve a multi-threaded directed acyclic graph implementation to support scaling performant test automation for CI/CD
+3. memory safe concurrency
+4. strong embedded Python support
