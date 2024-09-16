@@ -2,7 +2,7 @@
 
 > This is a development version of the utility. Please post questions in the Github issues.
 
-Declarative cli-based api management utility. 
+Declarative cli-based api management utility with strong IaC support. 
 
 Main features:
 
